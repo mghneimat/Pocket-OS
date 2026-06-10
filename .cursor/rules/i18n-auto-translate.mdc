@@ -1,0 +1,31 @@
+---
+description: Automatically add EN+CS translations for every new user-facing UI string — no prompt required
+alwaysApply: true
+---
+
+# i18n — automatic, mandatory
+
+When you add or change **any** user-facing text (labels, titles, helpers, placeholders, validation, buttons, empty states, toasts), do it **in the same edit** — do not wait for the user to ask.
+
+## Required steps (same PR / same turn)
+
+1. Read `.cursor/skills/custom-i18n/SKILL.md` if unsure of conventions.
+2. Grep `lib/locales/en.json` — reuse `common.*` when the label already exists.
+3. Add the key to **`lib/locales/en.json` and `lib/locales/cs.json`** (identical paths).
+4. Wire `useI18n()` + `t('...')` in the component — **no hardcoded strings** in JSX.
+5. Czech: formal "vy" tone, match existing `cs.json` style.
+
+## What counts as user-facing
+
+`<Text>`, `title=`, `placeholder=`, `accessibilityLabel=`, `Alert.alert`, validation messages, menu items, tab labels, error copy.
+
+## Exempt (no translation key)
+
+- Developer logs (`console.*`)
+- Test fixture strings
+- Route paths / storage keys / variable names
+- Already-translated dynamic values (user names, amounts formatted elsewhere)
+
+## Never deliver UI without locale parity
+
+A component change with new visible English text is **incomplete** until `cs.json` has the matching key. Do not leave `// TODO: translate` or English-only keys.

@@ -1,21 +1,10 @@
-import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import { useI18n } from '../../lib/i18n';
+import DashboardPageShell from '../../components/dashboard/DashboardPageShell';
+import GoalsContent from '../../components/dashboard/GoalsContent';
 
 export default function GoalsScreen() {
-  const { t } = useI18n();
-
   return (
-    <ScrollView className="flex-1 bg-bg">
-      {/* Content */}
-      <View className="flex-1 items-center justify-center px-5 py-12">
-        <Text className="text-section text-text font-semibold text-center mb-3">
-          {t('dashboard.goals')}
-        </Text>
-        <Text className="text-body text-muted text-center">
-          Coming soon
-        </Text>
-      </View>
-    </ScrollView>
+    <DashboardPageShell titleKey="dashboard.goals" sectionId="income">
+      {(bundle) => <GoalsContent bundle={bundle} />}
+    </DashboardPageShell>
   );
 }

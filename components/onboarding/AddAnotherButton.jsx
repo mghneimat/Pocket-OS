@@ -15,6 +15,8 @@ export default function AddAnotherButton({ label, onPress, style }) {
     <Pressable
       onPress={onPress}
       style={({ pressed }) => ([{
+        width: '100%',
+        alignSelf: 'stretch',
         paddingVertical: 12,
         borderRadius: R.input,
         borderWidth: 2,

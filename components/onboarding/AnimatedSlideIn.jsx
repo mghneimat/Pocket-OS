@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Animated, Easing } from 'react-native';
+import { useReducedMotion } from '../../lib/useReducedMotion';
 
 /**
  * Animated wrapper that fades + slides its children in/out.
@@ -15,28 +16,41 @@ import { Animated, Easing } from 'react-native';
  * @param {number} [props.duration=280] - Animation duration in ms
  */
 export default function AnimatedSlideIn({ visible, children, duration = 280 }) {
+  const reduceMotion = useReducedMotion();
   const anim = useRef(new Animated.Value(visible ? 1 : 0)).current;
   const [overflowHidden, setOverflowHidden] = useState(!visible);
 
   useEffect(() => {
+    if (reduceMotion) {
+      setOverflowHidden(!visible);
+      anim.setValue(visible ? 1 : 0);
+      return;
+    }
+
     if (visible) {
-      // Delay removing overflow:hidden until the expand animation completes
       const timer = setTimeout(() => setOverflowHidden(false), duration);
       return () => clearTimeout(timer);
-    } else {
-      // Immediately apply overflow:hidden before collapse starts
-      setOverflowHidden(true);
     }
-  }, [visible]);
+    setOverflowHidden(true);
+  }, [visible, reduceMotion, duration]);
 
   useEffect(() => {
+    if (reduceMotion) {
+      anim.setValue(visible ? 1 : 0);
+      return;
+    }
+
     Animated.timing(anim, {
       toValue: visible ? 1 : 0,
       duration,
       easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: false,
     }).start();
-  }, [visible]);
+  }, [visible, reduceMotion, duration]);
+
+  if (reduceMotion) {
+    return visible ? <>{children}</> : null;
+  }
 
   return (
     <Animated.View

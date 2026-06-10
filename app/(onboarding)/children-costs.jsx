@@ -1,16 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
-import PillToggle from '../../components/onboarding/PillToggle';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
 import LabeledInput from '../../components/onboarding/LabeledInput';
 import FrequencyPills from '../../components/onboarding/FrequencyPills';
-import AddAnotherButton from '../../components/onboarding/AddAnotherButton';
+import SuggestionChip from '../../components/onboarding/SuggestionChip';
+import AddChip from '../../components/onboarding/AddChip';
+import ScrollFocusAnchor from '../../components/onboarding/ScrollFocusAnchor';
+import InputGroup from '../../components/onboarding/InputGroup';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
 
 const FREQUENCIES = ['monthly', 'quarterly', 'annual'];
 
@@ -41,31 +44,33 @@ const AGE_GROUP_FIELDS = {
 export default function ChildrenCostsScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   const [household, setHousehold] = useState(null);
   const [children, setChildren] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [validationError, setValidationError] = useState('');
+  const [focusToken, setFocusToken] = useState(null);
 
-  // Per-child cost data
   const [costsData, setCostsData] = useState({});
-
-  // Track which fields are "activated" (suggestion chips toggled on)
   const [activeFields, setActiveFields] = useState({});
 
-  // ── Loaded data ──
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   useEffect(() => {
     (async () => {
       const h = await getData('pocketos_household');
       setHousehold(h);
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
 
       if (!h?.children?.length) {
-        // No children — skip to S8
-        router.replace('/(onboarding)/splash-pets');
+        if (isEditMode) {
+          leaveSection(() => {});
+        } else {
+          router.replace('/(onboarding)/splash-pets');
+        }
         return;
       }
 
@@ -85,14 +90,18 @@ export default function ChildrenCostsScreen() {
     })();
   }, []);
 
-  const toggleField = (childKey, field) => {
+  const toggleField = (childKey, field, scroll = false) => {
+    const willActivate = !activeFields[childKey]?.[field];
     setActiveFields(prev => ({
       ...prev,
       [childKey]: {
         ...prev[childKey],
-        [field]: !prev[childKey]?.[field],
+        [field]: willActivate,
       },
     }));
+    if (scroll && willActivate) {
+      setFocusToken(`${childKey}_${field}`);
+    }
   };
 
   const updateField = (childKey, field, updates) => {
@@ -109,7 +118,6 @@ export default function ChildrenCostsScreen() {
     let newKey = null;
     setCostsData(prev => {
       const childData = { ...prev[childKey] };
-      // Find the next available 'other' index
       let otherIdx = 1;
       while (childData[`other_${otherIdx}`]) {
         otherIdx++;
@@ -118,38 +126,35 @@ export default function ChildrenCostsScreen() {
       childData[newKey] = { amount: '', frequency: 'monthly' };
       return { ...prev, [childKey]: childData };
     });
-    // Auto-activate the new other field after state update
     setTimeout(() => {
-      if (newKey) toggleField(childKey, newKey);
+      if (newKey) {
+        toggleField(childKey, newKey, true);
+      }
     }, 50);
-    return newKey;
   };
 
-  const removeOtherField = (childKey, fieldKey) => {
-    setCostsData(prev => {
-      const childData = { ...prev[childKey] };
-      delete childData[fieldKey];
-      return { ...prev, [childKey]: childData };
+  const persistChildrenCosts = async () => {
+    await completeSection({
+      persist: async () => { await setData('pocketos_children_costs', costsData); },
+      onboardingPatch: { completed: false, currentStep: 'children-costs', percentComplete: 78 },
+      nextRoute: '/(onboarding)/splash-pets',
     });
   };
 
   const handleContinue = async () => {
     setValidationError('');
 
+    if (isEditMode) {
+      await persistChildrenCosts();
+      return;
+    }
+
     if (activeTab < children.length - 1) {
       setActiveTab(activeTab + 1);
       return;
     }
 
-    // Save all children costs
-    await setData('pocketos_children_costs', costsData);
-    await setData('pocketos_onboarding', {
-      completed: false,
-      currentStep: 'children-costs',
-      percentComplete: 78,
-    });
-
-    router.replace('/(onboarding)/splash-pets');
+    await persistChildrenCosts();
   };
 
   const handleBack = async () => {
@@ -158,21 +163,18 @@ export default function ChildrenCostsScreen() {
       setActiveTab(activeTab - 1);
       return;
     }
-    // Save children costs data before navigating back
     await setData('pocketos_children_costs', costsData);
-    router.replace('/(onboarding)/splash-children');
+    leaveSection(() => router.replace('/(onboarding)/splash-children'));
   };
 
   const progress = 78;
-  const progressLabel = t('onboarding.progress', { percent: progress });
-
+  const screenProgress = isEditMode ? undefined : progress;
   const renderChildForm = (child, idx) => {
     const childKey = `child_${idx}`;
     const fields = AGE_GROUP_FIELDS[child.ageGroup] || [];
     const data = costsData[childKey] || {};
     const active = activeFields[childKey] || {};
 
-    // Collect all field keys: predefined fields + any additional 'other_X' fields
     const allFieldKeys = [...fields];
     Object.keys(data).forEach(k => {
       if (k.startsWith('other_') && !allFieldKeys.includes(k)) {
@@ -180,125 +182,77 @@ export default function ChildrenCostsScreen() {
       }
     });
 
+    const fieldLabel = (field) => {
+      const isOther = field.startsWith('other_');
+      const i18nField = FIELD_I18N_MAP[field] || field;
+      return isOther
+        ? t('onboarding.childrenCosts.q9.field.other')
+        : t(`onboarding.childrenCosts.q9.field.${i18nField}`);
+    };
+
     return (
       <View>
-        {/* Suggestion chips row */}
         <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 10 }}>
           {t('onboarding.childrenCosts.q9.suggestions')}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 }}>
-          {allFieldKeys.map(field => {
-            const isOther = field.startsWith('other_');
-            const i18nField = FIELD_I18N_MAP[field] || field;
-            const isActive = active[field];
-            return (
-              <Pressable
-                key={field}
-                onPress={() => toggleField(childKey, field)}
-                style={({ pressed }) => ({
-                  width: '48%',
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
-                  borderRadius: 12,
-                  borderWidth: 1.5,
-                  borderColor: isActive ? C.primary : pressed ? C.placeholder : C.border,
-                  backgroundColor: isActive
-                    ? C.chipSelectedBg
-                    : pressed
-                      ? C.bg
-                      : C.surface,
-                  marginBottom: 8,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                })}
-              >
-                <Text style={{
-                  fontSize: 13,
-                  fontWeight: isActive ? '600' : '500',
-                  color: isActive ? C.primary : C.muted,
-                  marginRight: isActive ? 6 : 0,
-                }}>
-                  {isOther
-                    ? t('onboarding.childrenCosts.q9.field.other')
-                    : t(`onboarding.childrenCosts.q9.field.${i18nField}`)}
-                </Text>
-                {isActive && (
-                  <View style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    backgroundColor: C.primary,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '700' }}>{'✓'}</Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
+          {allFieldKeys.map(field => (
+            <SuggestionChip
+              key={field}
+              label={fieldLabel(field)}
+              active={active[field]}
+              onPress={() => toggleField(childKey, field, true)}
+            />
+          ))}
+          <AddChip
+            label={t('onboarding.childrenCosts.q9.addAnother')}
+            onPress={() => addOtherField(childKey)}
+          />
         </View>
 
-        {/* Expanded cost fields for active suggestions */}
         {allFieldKeys.map(field => {
           const isActive = active[field];
           if (!isActive) return null;
           const isOther = field.startsWith('other_');
-          const i18nField = FIELD_I18N_MAP[field] || field;
           return (
-            <AnimatedSlideIn visible={isActive} key={field}>
-              <View style={{ marginBottom: 16, padding: S.cardPad, backgroundColor: C.chipSelectedBg, borderRadius: R.card, borderWidth: 1, borderColor: C.chipSelectedBorder }}>
-                {/* Proper label */}
-                <Text style={{ fontSize: 13, color: C.primary, fontWeight: '600', marginBottom: 8 }}>
-                  {isOther
-                    ? t('onboarding.childrenCosts.q9.field.other')
-                    : t(`onboarding.childrenCosts.q9.field.${i18nField}`)}
-                </Text>
-                {/* Input row with delete button for other fields */}
-                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+            <ScrollFocusAnchor
+              key={field}
+              focusId={`${childKey}_${field}`}
+              focusToken={focusToken}
+            >
+              <AnimatedSlideIn visible={isActive}>
+                <InputGroup
+                  label={fieldLabel(field)}
+                  onRemove={isOther ? () => {
+                    setCostsData(prev => {
+                      const childData = { ...prev[childKey] };
+                      delete childData[field];
+                      return { ...prev, [childKey]: childData };
+                    });
+                    toggleField(childKey, field);
+                  } : undefined}
+                  style={{ marginBottom: 16 }}
+                >
                   <LabeledInput
-                    label={isOther
-                      ? t('onboarding.childrenCosts.q9.field.other')
-                      : t(`onboarding.childrenCosts.q9.field.${i18nField}`)}
                     value={data[field]?.amount || ''}
                     onChangeText={(v) => updateField(childKey, field, { amount: v })}
                     numeric
                     placeholder={t('onboarding.childrenCosts.q9.amountPlaceholder')}
                     large
-                    containerStyle={{ flex: 1 }}
+                    inGroup
                     currency={currency}
                   />
-                  {isOther && (
-                    <Pressable
-                      onPress={() => removeOtherField(childKey, field)}
-                      style={({ pressed }) => ({
-                        padding: 8,
-                        borderRadius: 6,
-                        backgroundColor: pressed ? 'rgba(209,64,64,0.12)' : 'transparent',
-                      })}
-                    >
-                      <Text style={{ fontSize: 18, color: '#D14040' }}>✕</Text>
-                    </Pressable>
-                  )}
-                </View>
-                {/* Frequency label + toggles */}
-                <FrequencyPills
-                  options={FREQUENCIES}
-                  value={data[field]?.frequency}
-                  onChange={(freq) => updateField(childKey, field, { frequency: freq })}
-                  small
-                />
-              </View>
-            </AnimatedSlideIn>
+                  <FrequencyPills
+                    options={FREQUENCIES}
+                    value={data[field]?.frequency}
+                    onChange={(freq) => updateField(childKey, field, { frequency: freq })}
+                    small
+                  />
+                </InputGroup>
+              </AnimatedSlideIn>
+            </ScrollFocusAnchor>
           );
         })}
-
-        {/* Add other cost button */}
-        <AddAnotherButton
-          label={t('onboarding.childrenCosts.q9.addAnother')}
-          onPress={() => addOtherField(childKey)}
-        />
       </View>
     );
   };
@@ -310,15 +264,13 @@ export default function ChildrenCostsScreen() {
       chapter={t('onboarding.childrenCosts.chapter')}
       title={currentChild ? t('onboarding.childrenCosts.q9.title', { name: currentChild.displayName || `${t('onboarding.childrenCosts.child')} ${activeTab + 1}` }) : ''}
       helper={currentChild ? t('onboarding.childrenCosts.q9.helper', { name: currentChild.displayName || `${t('onboarding.childrenCosts.child')} ${activeTab + 1}`, ageGroup: currentChild.ageGroup || '' }) : ''}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
       onBack={handleBack}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
       animationKey={activeTab}
     >
-      {/* Tab row — toggles as wide as continue button */}
       {children.length > 0 && (
         <View style={{ flexDirection: 'row', borderRadius: R.input, borderWidth: 1, borderColor: C.border, overflow: 'hidden', marginBottom: 20 }}>
           {children.map((child, idx) => (

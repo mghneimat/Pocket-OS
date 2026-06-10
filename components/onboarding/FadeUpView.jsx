@@ -1,5 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { Animated, Easing } from 'react-native';
+import { USE_NATIVE_DRIVER } from '../../lib/animation';
+import { useReducedMotion } from '../../lib/useReducedMotion';
 
 /**
  * Animated wrapper that fades in + slides up its children.
@@ -23,44 +25,39 @@ import { Animated, Easing } from 'react-native';
  * @param {object} [props.style] - Additional styles for the animated container
  */
 export default function FadeUpView({ children, animationKey, duration = 400, translateY = 12, style }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translate = useRef(new Animated.Value(translateY)).current;
-
-  // Track the animationKey so we can re-trigger when it changes
-  const animKey = useRef(animationKey);
+  const reduceMotion = useReducedMotion();
+  const opacity = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+  const translate = useRef(new Animated.Value(reduceMotion ? 0 : translateY)).current;
 
   const runAnimation = () => {
-    // Reset to start values
+    if (reduceMotion) {
+      opacity.setValue(1);
+      translate.setValue(0);
+      return;
+    }
+
     opacity.setValue(0);
     translate.setValue(translateY);
 
-    // Snappy ease-out that settles quickly without lingering at the end
-    // Using a custom cubic-bezier: fast start, smooth settle
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
         duration,
         easing: Easing.bezier(0.16, 1, 0.3, 1),
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
       Animated.timing(translate, {
         toValue: 0,
         duration,
         easing: Easing.bezier(0.16, 1, 0.3, 1),
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
     ]).start();
   };
 
   useEffect(() => {
     runAnimation();
-    animKey.current = animationKey;
-  }, [animationKey]);
-
-  // Also run on initial mount even if key hasn't changed
-  useEffect(() => {
-    runAnimation();
-  }, []);
+  }, [animationKey, reduceMotion]);
 
   return (
     <Animated.View

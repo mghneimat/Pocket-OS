@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import PillToggle from '../../components/onboarding/PillToggle';
 import DatePicker from '../../components/onboarding/DatePicker';
+import { elevationShadow } from '../../lib/shadow';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
 import RemoveButton from '../../components/onboarding/RemoveButton';
 import LabeledInput from '../../components/onboarding/LabeledInput';
 import YesNoToggle from '../../components/onboarding/YesNoToggle';
 import AddAnotherButton from '../../components/onboarding/AddAnotherButton';
+import InputGroup from '../../components/onboarding/InputGroup';
+import ScrollFocusAnchor from '../../components/onboarding/ScrollFocusAnchor';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
 
 const DEBT_TYPES = ['creditCard', 'personalLoan', 'carLoan', 'studentLoan', 'medical', 'family', 'bnpl', 'other'];
 
@@ -88,11 +92,7 @@ function DayPicker({ value, onChange, placeholder }) {
                 overflow: 'hidden',
                 borderWidth: 1,
                 borderColor: C.border,
-                elevation: 8,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 8,
+                ...elevationShadow({ offsetY: 4, blur: 8, opacity: 0.15 }),
               }}
             >
               <ScrollView style={{ maxHeight: 200 }} bounces={false} keyboardShouldPersistTaps="handled">
@@ -136,9 +136,11 @@ function DayPicker({ value, onChange, placeholder }) {
 export default function DebtsScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   // ── Loaded data ──
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   const [step, setStep] = useState('q13');
   const [validationError, setValidationError] = useState('');
@@ -149,17 +151,32 @@ export default function DebtsScreen() {
   // Q13a — Debt details
   const [debts, setDebts] = useState([]);
   const [visibleDebts, setVisibleDebts] = useState({});
+  const [focusToken, setFocusToken] = useState(null);
 
   // ── Load currency from location data ──
   useEffect(() => {
     (async () => {
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
     })();
   }, []);
 
+  const persistDebts = async () => {
+    const data = hasDebts === false ? [] : debts;
+    await completeSection({
+      persist: async () => { await setData('pocketos_debts', data); },
+      onboardingPatch: { completed: false, currentStep: 'debts', percentComplete: 90 },
+      nextRoute: '/(onboarding)/splash-budget',
+    });
+  };
+
   const handleContinue = async () => {
     setValidationError('');
+
+    if (isEditMode) {
+      await persistDebts();
+      return;
+    }
 
     if (step === 'q13') {
       if (hasDebts === null) {
@@ -170,13 +187,11 @@ export default function DebtsScreen() {
         if (debts.length === 0) addDebt();
         setStep('q13a');
       } else {
-        await setData('pocketos_debts', []);
-        await setData('pocketos_onboarding', {
-          completed: false,
-          currentStep: 'debts',
-          percentComplete: 90,
+        await completeSection({
+          persist: async () => { await setData('pocketos_debts', []); },
+          onboardingPatch: { completed: false, currentStep: 'debts', percentComplete: 90 },
+          nextRoute: '/(onboarding)/splash-budget',
         });
-        router.replace('/(onboarding)/splash-budget');
       }
       return;
     }
@@ -189,13 +204,11 @@ export default function DebtsScreen() {
         }
       }
 
-      await setData('pocketos_debts', debts);
-      await setData('pocketos_onboarding', {
-        completed: false,
-        currentStep: 'debts',
-        percentComplete: 90,
+      await completeSection({
+        persist: async () => { await setData('pocketos_debts', debts); },
+        onboardingPatch: { completed: false, currentStep: 'debts', percentComplete: 90 },
+        nextRoute: '/(onboarding)/splash-budget',
       });
-      router.replace('/(onboarding)/splash-budget');
       return;
     }
   };
@@ -203,13 +216,14 @@ export default function DebtsScreen() {
   const handleBack = () => {
     setValidationError('');
     if (step === 'q13a') { setStep('q13'); return; }
-    // On the first question — navigate back to the debts splash screen
-    router.replace('/(onboarding)/splash-debts');
+    leaveSection(() => router.replace('/(onboarding)/splash-debts'));
   };
 
   const addDebt = () => {
     const newIdx = debts.length;
+    const id = `debt_${Date.now()}`;
     setDebts([...debts, {
+      id,
       type: null,
       balance: '',
       minPayment: '',
@@ -218,7 +232,7 @@ export default function DebtsScreen() {
       paymentDueDay: '',
       notes: '',
     }]);
-    // Start hidden, then animate in on next tick
+    setFocusToken(id);
     setVisibleDebts(prev => ({ ...prev, [newIdx]: false }));
     setTimeout(() => {
       setVisibleDebts(prev => ({ ...prev, [newIdx]: true }));
@@ -240,7 +254,7 @@ export default function DebtsScreen() {
   };
 
   const progress = 90;
-  const progressLabel = t('onboarding.progress', { percent: progress });
+  const screenProgress = isEditMode ? undefined : progress;
 
   const renderQ13 = () => (
     <View>
@@ -257,7 +271,8 @@ export default function DebtsScreen() {
   );
 
   const renderDebtForm = (debt, idx) => (
-    <AnimatedSlideIn key={idx} visible={visibleDebts[idx] !== false}>
+    <ScrollFocusAnchor key={debt.id || idx} focusId={debt.id || String(idx)} focusToken={focusToken}>
+    <AnimatedSlideIn visible={visibleDebts[idx] !== false}>
       <View style={{ marginBottom: 20, padding: 16, backgroundColor: C.surface, borderRadius: 12, borderWidth: 1, borderColor: C.border }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <Text style={{ fontSize: 15, fontWeight: '600', color: C.primary }}>
@@ -293,27 +308,29 @@ export default function DebtsScreen() {
           ))}
         </View>
 
-        {/* Balance */}
-        <LabeledInput
-          label={t('onboarding.debts.q13a.balanceLabel')}
-          value={debt.balance}
-          onChangeText={(v) => updateDebt(idx, { balance: v })}
-          numeric
-          placeholder={t('onboarding.debts.q13a.balancePlaceholder')}
-          large
-          currency={currency}
-        />
+        <InputGroup label={t('onboarding.debts.q13a.balanceLabel')}>
+          <LabeledInput
+            value={debt.balance}
+            onChangeText={(v) => updateDebt(idx, { balance: v })}
+            numeric
+            placeholder={t('onboarding.debts.q13a.balancePlaceholder')}
+            large
+            inGroup
+            currency={currency}
+          />
+        </InputGroup>
 
-        {/* Min payment */}
-        <LabeledInput
-          label={t('onboarding.debts.q13a.minPaymentLabel')}
-          value={debt.minPayment}
-          onChangeText={(v) => updateDebt(idx, { minPayment: v })}
-          numeric
-          placeholder={t('onboarding.debts.q13a.minPaymentPlaceholder')}
-          large
-          currency={currency}
-        />
+        <InputGroup label={t('onboarding.debts.q13a.minPaymentLabel')}>
+          <LabeledInput
+            value={debt.minPayment}
+            onChangeText={(v) => updateDebt(idx, { minPayment: v })}
+            numeric
+            placeholder={t('onboarding.debts.q13a.minPaymentPlaceholder')}
+            large
+            inGroup
+            currency={currency}
+          />
+        </InputGroup>
         <Text style={{ ...T.caption, color: C.muted, marginTop: -8, marginBottom: 12 }}>
           {t('onboarding.debts.q13a.minPaymentHelper')}
         </Text>
@@ -373,6 +390,7 @@ export default function DebtsScreen() {
         />
       </View>
     </AnimatedSlideIn>
+    </ScrollFocusAnchor>
   );
 
   const renderQ13a = () => (
@@ -397,12 +415,11 @@ export default function DebtsScreen() {
     <QuestionScreen
       chapter={t('onboarding.debts.chapter')}
       title={stepTitles[step]}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
       onBack={handleBack}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
       animationKey={step}
     >
       {step === 'q13' && renderQ13()}

@@ -7,12 +7,12 @@ import { translate } from '../../lib/i18n';
 describe('i18n translate function', () => {
   test('returns translation for valid key in English', () => {
     const result = translate('en', 'app.name');
-    expect(result).toBe('PocketOS');
+    expect(result).toBe('Bida');
   });
 
   test('returns translation for valid key in Czech', () => {
     const result = translate('cs', 'app.name');
-    expect(result).toBe('PocketOS');
+    expect(result).toBe('Bida');
   });
 
   test('returns nested translation', () => {
@@ -37,6 +37,17 @@ describe('i18n translate function', () => {
 
   test('returns same string when no interpolation needed', () => {
     const result = translate('en', 'app.tagline', {});
-    expect(result).toBe('Your household finances, finally clear.');
+    expect(result).toBe('Your wallet patron');
+  });
+
+  test('resolves dashboard metric explain keys in English', () => {
+    expect(translate('en', 'dashboard.metricExplain.flexibleBudget.title')).toBe('Your spending budget');
+    expect(translate('en', 'dashboard.metricExplain.tapHint')).toBe('Tap to see how this is calculated');
+    expect(translate('en', 'dashboard.metricExplain.rows.income')).toBe('Monthly income');
+  });
+
+  test('resolves dashboard metric explain keys in Czech', () => {
+    expect(translate('cs', 'dashboard.metricExplain.flexibleBudget.title')).toBe('Váš rozpočet na výdaje');
+    expect(translate('cs', 'dashboard.metricExplain.recurringCosts.title')).toBe('Pravidelné náklady');
   });
 });

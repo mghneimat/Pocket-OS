@@ -1,22 +1,21 @@
 import { useState, useEffect } from 'react';
-import { View, TextInput, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Text } from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { isConsentAccepted } from '../../lib/consent';
 import { C, R, T, S } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import OptionCard from '../../components/onboarding/OptionCard';
 import LabeledInput from '../../components/onboarding/LabeledInput';
 
-// Step → progress % and label mapping
 const STEP_PROGRESS = {
-  type:         { progress: 10, label: 'Household · 1 of 4' },
-  partner:      { progress: 20, label: 'Household · 2 of 4' },
-  children:     { progress: 30, label: 'Household · 3 of 4' },
-  numChildren:  { progress: 40, label: 'Household · Children' },
-  childDetails: { progress: 50, label: 'Household · 4 of 4' },
+  type: 10,
+  partner: 20,
+  children: 30,
+  numChildren: 40,
+  childDetails: 50,
 };
 
 export default function HouseholdScreen() {
@@ -47,11 +46,14 @@ export default function HouseholdScreen() {
     loadData();
   }, []);
 
-  const handleBack = () => {
+  const handleBack = async () => {
     setValidationError('');
     if (currentStep === 'type') {
-      // On the first question — navigate back to consent
-      router.replace('/(onboarding)/consent');
+      if (await isConsentAccepted()) {
+        router.replace('/(onboarding)/welcome');
+      } else {
+        router.replace('/(onboarding)/consent');
+      }
     } else if (currentStep === 'partner') {
       setCurrentStep('type');
     } else if (currentStep === 'children') {
@@ -81,6 +83,9 @@ export default function HouseholdScreen() {
       }
       if (householdType === 'partner') {
         setCurrentStep('partner');
+      } else if (householdType === 'solo') {
+        setHasChildren(false);
+        await saveAndContinue();
       } else {
         setCurrentStep('children');
       }
@@ -149,7 +154,7 @@ export default function HouseholdScreen() {
     setChildren(newChildren);
   };
 
-  const stepMeta = STEP_PROGRESS[currentStep] || { progress: 10, label: '' };
+  const progress = STEP_PROGRESS[currentStep] ?? 10;
 
   // Q1: Household Type
   if (currentStep === 'type') {
@@ -159,12 +164,10 @@ export default function HouseholdScreen() {
         chapter={t('onboarding.household.chapter')}
         title={t('onboarding.household.type.title')}
         helper={t('onboarding.household.type.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={stepMeta.progress}
-        progressLabel={stepMeta.label}
+        progress={progress}
       >
         <OptionCard
           icon="🧍"
@@ -196,12 +199,10 @@ export default function HouseholdScreen() {
         chapter={t('onboarding.household.chapter')}
         title={t('onboarding.household.partnerName.title')}
         helper={t('onboarding.household.partnerName.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={stepMeta.progress}
-        progressLabel={stepMeta.label}
+        progress={progress}
       >
         <LabeledInput
           label={t('onboarding.household.partnerName.label')}
@@ -222,12 +223,10 @@ export default function HouseholdScreen() {
         chapter={t('onboarding.household.chapter')}
         title={t('onboarding.household.children.title')}
         helper={t('onboarding.household.children.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={stepMeta.progress}
-        progressLabel={stepMeta.label}
+        progress={progress}
       >
         <View style={{ gap: 10 }}>
           <OptionCard
@@ -258,12 +257,10 @@ export default function HouseholdScreen() {
         chapter={t('onboarding.household.chapter')}
         title={t('onboarding.household.numChildren.title')}
         helper={t('onboarding.household.numChildren.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={stepMeta.progress}
-        progressLabel={stepMeta.label}
+        progress={progress}
       >
         <View style={{ alignItems: 'center', paddingVertical: 8 }}>
           {/* Stepper row */}
@@ -369,12 +366,10 @@ export default function HouseholdScreen() {
         chapter={t('onboarding.household.chapter')}
         title={t('onboarding.household.childDetails.title', { n: currentChildIndex + 1 })}
         helper={t('onboarding.household.childDetails.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={stepMeta.progress}
-        progressLabel={stepMeta.label}
+        progress={progress}
       >
         <LabeledInput
           label={t('onboarding.household.childDetails.nameLabel')}

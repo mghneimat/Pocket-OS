@@ -1,5 +1,33 @@
 # Changelog — auto-maintained by AI tools
 
+[07-06-2026 21:00] [Composer] Replaced onboarding-reuse section edit with dedicated inline edit forms that load saved data, edit values in the modal, and persist directly to storage | files: lib/sectionEditStorage.js, lib/sectionEditRegistry.js, components/section-edit/SectionEditForm.jsx, components/section-edit/AmountFrequencyFields.jsx, components/section-edit/forms/*.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 20:00] [Composer] Removed Top cost categories and Expenses cards from dashboard home to reduce clutter; detail remains on Costs/Expenses tabs | files: components/dashboard/DashboardHome.jsx
+
+[07-06-2026 19:30] [Composer] Added optional savings-goal deduction from spending budget — user toggles reserve vs keep separate in onboarding and Budget tab; dashboard hero uses effectiveMonthlyFlexible | files: lib/finance.js, lib/dashboardData.js, lib/schema.js, app/(onboarding)/budget.jsx, components/dashboard/BudgetContent.jsx, components/dashboard/OverviewMetricCards.jsx, __tests__/lib/finance.test.js, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 18:00] [Composer] Onboarding UI consistency — aligned gluestack-ui.config.js to blue/navy onboarding-theme.js; extended FormInput/PrimaryButton/OptionCard in components/ui with full LabeledInput parity; thin re-export wrappers in components/onboarding | files: gluestack-ui.config.js, constants/onboarding-theme.js, components/ui/FormInput.jsx, components/ui/PrimaryButton.jsx, components/ui/OptionCard.jsx, components/onboarding/LabeledInput.jsx, components/onboarding/OptionCard.jsx
+
+[07-06-2026 18:05] [Composer] Migrated onboarding shells to PrimaryButton and wired progressLabel badge in QuestionScreen/SplashScreen; fixed location/occupation legacy beige palette; added location i18n keys | files: components/onboarding/QuestionScreen.jsx, components/onboarding/SplashScreen.jsx, app/(onboarding)/welcome.jsx, app/(onboarding)/consent.jsx, app/(onboarding)/location.jsx, app/(onboarding)/occupation.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 18:10] [Composer] Extracted CostCard primitive and refactored subscriptions, other-costs, children-costs, pets, housing q6g card shells for DRY consistent card styling | files: components/onboarding/CostCard.jsx, app/(onboarding)/subscriptions.jsx, app/(onboarding)/other-costs.jsx, app/(onboarding)/children-costs.jsx, app/(onboarding)/pets.jsx, app/(onboarding)/housing.jsx
+
+[07-06-2026 18:15] [Composer] Removed unused TextInput imports across onboarding screens; migrated all splash-*.jsx SVG fills to SVG token palette; deleted superseded CurrencyInput.jsx | files: app/(onboarding)/*.jsx, constants/onboarding-theme.js, components/onboarding/CurrencyInput.jsx (deleted), docs/GLUESTACK_MIGRATION.md
+
+[07-06-2026 15:30] [Cursor Agent] Added expo-sdk-56-router Agent Skill — SDK 56 versions, file-based routing, PocketOS onboarding/app layouts, navigation workflows — so agents use correct Router patterns instead of outdated SDK or React Navigation assumptions | files: .cursor/skills/expo-sdk-56-router/SKILL.md, .cursor/skills/expo-sdk-56-router/reference.md, .cursor/skills/expo-sdk-56-router/examples.md, AGENTS.md
+
+[07-06-2026 14:15] [Cursor Agent] Added react-native-svg Agent Skill — icons, splash illustrations, charts, Reanimated animatedProps, Gluestack/Expo version notes — so agents follow pocket-os SVG patterns instead of web SVG or broken icon fonts | files: .cursor/skills/react-native-svg/SKILL.md, .cursor/skills/react-native-svg/examples.md, .cursor/skills/react-native-svg/reference.md
+
+[07-06-2026 13:00] [Cursor Agent] Added custom-finance Agent Skill documenting lib/finance.js — toMonthly multipliers, formatCurrency, budget aggregation, debtPayoff — so agents never duplicate financial math in screens | files: .cursor/skills/custom-finance/SKILL.md, .cursor/skills/custom-finance/reference.md, .cursor/skills/custom-finance/examples.md
+
+[07-06-2026 12:30] [Cursor Agent] Updated custom-storage skill to treat lib/schema.js as SSOT for data shapes — key→@typedef map, JSDoc patterns, legacy drift notes — so agents align saves with schema before persisting | files: .cursor/skills/custom-storage/SKILL.md, .cursor/skills/custom-storage/reference.md, .cursor/skills/custom-storage/examples.md
+
+[07-06-2026 12:00] [Cursor Agent] Added custom-storage Agent Skill documenting PocketOS lib/storage.js patterns, pocketos_* keys, onboarding progress, and clearAllData registry so agents persist data consistently | files: .cursor/skills/custom-storage/SKILL.md, .cursor/skills/custom-storage/reference.md, .cursor/skills/custom-storage/examples.md
+
+[2026-06-07] [Cursor Agent] Enforced automatic i18n on every UI change via always-on Cursor rule and AGENTS.md mandate so agents add EN+CS keys without user prompting | files: .cursor/rules/i18n-auto-translate.mdc, .cursor/skills/custom-i18n/SKILL.md, AGENTS.md
+
+[2026-06-07] [Cursor Agent] Added custom-i18n Agent Skill documenting PocketOS JSON locale system, key conventions, and EN/CS parity workflows so agents never hardcode UI strings | files: .cursor/skills/custom-i18n/SKILL.md, .cursor/skills/custom-i18n/reference.md, .cursor/skills/custom-i18n/examples.md
+
 [2026-06-06] [AI] Fixed RemoveButton vertical alignment in "add other" cards — wrapped RemoveButton and inline ✕ Pressable in fixed-height container Views matching adjacent input container height (63px for `large` variant, 44px for `inCard` variant) with `justifyContent: 'center'` so the ✕ button aligns precisely with the input box rather than the full LabeledInput height (label + input container); applied to housing.jsx Q6f/Q6h/Q6g, transport.jsx Q7bicycle/Q7d, and income.jsx Q5b | files: components/onboarding/RemoveButton.jsx, app/(onboarding)/housing.jsx, app/(onboarding)/transport.jsx, app/(onboarding)/income.jsx
 
 [2026-06-06] [AI] Changed all currency input placeholders from "e.g. X XXX" to "0" across 17 keys in en.json — every currency/amount input now shows "0" as placeholder instead of example values like "e.g. 50 000", "e.g. 2 000", etc.; reduced `large` variant paddingVertical from 14 to 10 in both LabeledInput and CurrencyInput for slightly shorter input height | files: lib/locales/en.json, components/onboarding/LabeledInput.jsx, components/onboarding/CurrencyInput.jsx
@@ -385,3 +413,331 @@
 [2026-06-04] [AI] Fixed end date DatePicker not appearing in health screen private coverage form — relaxed visibility condition from `frequency === 'custom' && startDate && customFrequencyMonths` to just `frequency === 'custom'` so the end date picker shows as soon as custom frequency is selected; removed Notes (optional) TextInput section | files: app/(onboarding)/health.jsx
 
 [2026-06-04] [AI] Fixed Continue button navigation in health screen — now finds the next unresolved member (not confirmed/skipped) instead of simply incrementing the tab index, so toggling between already-filled members doesn't skip over unresolved ones | files: app/(onboarding)/health.jsx
+
+[07-06-2026 12:00] [Composer] Added Cursor skill for React Native Reanimated v4 (Expo setup, core API, common UI patterns, migration notes) so agents use v4/worklets conventions when animating pocket-os | files: .cursor/skills/react-native-reanimated-v4/SKILL.md, .cursor/skills/react-native-reanimated-v4/reference.md, .cursor/skills/react-native-reanimated-v4/examples.md
+
+[07-06-2026 14:30] [Composer] Added NativeWind v4 Cursor skill (babel + metro className styling, PocketOS tokens, troubleshooting) so agents match existing tailwind.config setup instead of improvising styles | files: .cursor/skills/nativewind-v4/SKILL.md, .cursor/skills/nativewind-v4/reference.md, .cursor/skills/nativewind-v4/examples.md, .cursor/skills/expo-sdk-56-router/SKILL.md, .cursor/skills/react-native-reanimated-v4/SKILL.md
+
+[07-06-2026 18:10] [Composer] Installed pbakaus/impeccable design skill via skills CLI for frontend UX audit, polish, and anti-pattern guidance | files: .agents/skills/impeccable/, skills-lock.json
+
+[07-06-2026 18:25] [Composer] Restored visible InputGroup labels on all amount fields (rent, utilities, internet, income, transport, health, pets, children) so inputs always show a label inside the card | files: app/(onboarding)/housing.jsx, app/(onboarding)/income.jsx, app/(onboarding)/transport.jsx, app/(onboarding)/health.jsx, app/(onboarding)/pets.jsx, app/(onboarding)/children-costs.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 18:10] [Composer] Rebuilt DatePicker as typeable combobox with autocomplete suggestions; wrapped financial-goal target date in InputGroup | files: lib/datePicker.js, components/onboarding/DatePicker.jsx, app/(onboarding)/income.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 00:30] [Composer] Init (teach): wrote PRODUCT.md from codebase + critique; appended Design Context to AGENTS.md for agent grounding | files: PRODUCT.md, AGENTS.md
+
+[08-06-2026 00:15] [Composer] Generated DESIGN.md + .impeccable/design.json from onboarding-theme tokens and component patterns so agents stay on-brand | files: DESIGN.md, .impeccable/design.json
+
+[08-06-2026 00:05] [Composer] Sidebar icon rail aligned with collapse toggle; collapsed EN tap expands sidebar + opens language menu; modernized language dropdown | files: components/app/AppSidebar.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 23:50] [Composer] Moved BudgetExportBar below Q14 summary table so export actions follow the budget breakdown | files: app/(onboarding)/budget.jsx
+
+[07-06-2026 23:45] [Composer] Fixed BudgetExportBar ReferenceError — pressed only available via Pressable render-prop children, not in sibling Text style | files: components/onboarding/BudgetExportBar.jsx
+
+[07-06-2026 23:30] [Composer] Sidebar defaults to collapsed; fixed-height section label slots so nav/tools icons keep steady vertical position during expand/collapse | files: components/app/AppSidebar.jsx
+
+[07-06-2026 23:15] [Composer] Fixed sidebar icon jitter with constant icon slots + clipped inner panel; collapse/expand toggle crossfades between panel icons | files: components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx
+
+[07-06-2026 23:00] [Composer] AppSidebar uses onboarding-theme colors with Reanimated slide/collapse animations and hover/press states on nav rows | files: components/app/AppSidebar.jsx
+
+[07-06-2026 22:45] [Composer] Unified budget export buttons to a single onboarding chip style instead of mismatched per-format colors | files: components/onboarding/BudgetExportBar.jsx
+
+[07-06-2026 22:30] [Composer] Replaced bottom tab bar with Claude-style left AppSidebar (nav, tools, language, consent); Stack layout on wide screens with mobile overlay drawer | files: components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx, app/(app)/_layout.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 22:00] [Composer] Themed budget exports (PDF/XLSX/CSV) with table-matching indent, colors, borders, and separate amount/currency columns via xlsx-js-style | files: lib/budgetExport.js, app/(onboarding)/budget.jsx, package.json, package-lock.json
+
+[07-06-2026 21:45] [Composer] Replaced findNodeHandle in QuestionScreen scroll-to-anchor with measureInWindow so auto-scroll works on web | files: components/onboarding/QuestionScreen.jsx
+
+[07-06-2026 21:30] [Composer] Moved Withdraw consent from dashboard into HamburgerMenu drawer to match settings placement in app shell | files: components/HamburgerMenu.jsx, app/(app)/dashboard.jsx
+
+[07-06-2026 21:15] [Composer] Welcome CTA renamed to Start now; welcome and consent PrimaryButtons use full content width to match QuestionScreen continue buttons | files: app/(onboarding)/welcome.jsx, app/(onboarding)/consent.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 21:00] [Composer] Persist GDPR consent in pocketos_consent so accepted users skip the screen; added Withdraw consent on dashboard to revoke and re-prompt | files: lib/consent.js, lib/schema.js, lib/storage.js, app/(onboarding)/consent.jsx, app/(onboarding)/welcome.jsx, app/(onboarding)/household.jsx, app/(app)/dashboard.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 20:15] [Composer] Batch 3 onboarding: health duplicate end-date removed + switch-premium input; AddChip/SuggestionChip; nested InputGroup surface bg; pets add/remove animations; scroll-to-new via OnboardingScrollContext; budget currency from location, chevron contrast, CSV/XLSX/PDF export | files: app/(onboarding)/health.jsx, children-costs.jsx, pets.jsx, budget.jsx, income.jsx, housing.jsx, debts.jsx, components/onboarding/SuggestionChip.jsx, AddChip.jsx, ScrollFocusAnchor.jsx, BudgetExportBar.jsx, InputGroup.jsx, AnimatedRow.jsx, QuestionScreen.jsx, lib/onboardingScroll.js, lib/budgetExport.js, lib/locales/en.json, lib/locales/cs.json, package.json
+
+[07-06-2026 17:50] [Composer] Wrapped financial-goal description in InputGroup with inCard field so label and placeholder are distinct (label inside card, placeholder e.g. text only when empty) | files: app/(onboarding)/income.jsx, components/onboarding/InputGroup.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 17:35] [Composer] Moved InputGroup labels inside the card panel so headings share the same background as inputs and frequency pills | files: components/onboarding/InputGroup.jsx
+
+[07-06-2026 17:20] [Composer] Unified splash/question nav back button via OnboardingNavBackButton; fixed InputGroup layout (inGroup transparent inputs, 16px gap, surface card) and rolled out to all amount+frequency groups across onboarding | files: components/onboarding/OnboardingNavBackButton.jsx, components/onboarding/InputGroup.jsx, components/ui/FormInput.jsx, components/onboarding/QuestionScreen.jsx, components/onboarding/SplashScreen.jsx, app/(onboarding)/income.jsx, app/(onboarding)/housing.jsx, app/(onboarding)/transport.jsx, app/(onboarding)/health.jsx, app/(onboarding)/pets.jsx, app/(onboarding)/children-costs.jsx, app/(onboarding)/subscriptions.jsx, app/(onboarding)/other-costs.jsx, app/(onboarding)/debts.jsx
+
+[07-06-2026 16:45] [Composer] Onboarding UX batch: fixed household partner label, subscriptions SvgXml crash, square RemoveButton, DatePicker month names, smaller amount inputs, InputGroup/FrequencyPills labels, Kč currency display, removed PlaceholderIllustration and progress chip, housing utilities A/B and govt-charge UX, health renewal flow, pets tabs, transport maintenance alignment | files: lib/currency.js, lib/locales/en.json, lib/locales/cs.json, components/ui/FormInput.jsx, components/onboarding/*.jsx, app/(onboarding)/*.jsx
+
+[07-06-2026 18:30] [Composer] Installed emil-design-eng community skill via skills CLI for Emil Kowalski design-engineering guidance on animation, component polish, and interaction decisions | files: .agents/skills/emil-design-eng/SKILL.md, skills-lock.json
+
+[07-06-2026 19:00] [Composer] Installed Leonxlnx/taste-skill suite (13 anti-slop design skills) via skills CLI for layout, typography, motion, and redesign guidance alongside existing impeccable/emil skills | files: .agents/skills/design-taste-frontend/, .agents/skills/design-taste-frontend-v1/, .agents/skills/gpt-taste/, .agents/skills/image-to-code/, .agents/skills/imagegen-frontend-mobile/, .agents/skills/imagegen-frontend-web/, .agents/skills/brandkit/, .agents/skills/redesign-existing-projects/, .agents/skills/high-end-visual-design/, .agents/skills/minimalist-ui/, .agents/skills/industrial-brutalist-ui/, .agents/skills/full-output-enforcement/, .agents/skills/stitch-design-taste/, skills-lock.json
+
+[07-06-2026 20:15] [Composer - impeccable craft] Added budget display frequency (daily/weekly/monthly) on Q14 with live preview, finance helpers, schema field, and sentence-case table headers so dashboard can show daily-first hero later | files: lib/finance.js, lib/schema.js, app/(onboarding)/budget.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/finance.test.js
+
+[07-06-2026 21:00] [Composer - impeccable harden] Hardened onboarding a11y and resilience: reduced-motion animations, web focus rings, placeholder contrast, screen reader labels on nav/pills/table rows, continue double-submit guard, budget load error + retry | files: lib/useReducedMotion.js, lib/a11y.js, constants/onboarding-theme.js, components/onboarding/*.jsx, components/ui/FormInput.jsx, components/ui/OptionCard.jsx, components/ui/PrimaryButton.jsx, app/(onboarding)/budget.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 21:30] [Composer - impeccable adapt] Adapted onboarding for narrow phones: stacked budget table rows below 400px, compact amount column, safe-area bottom bars, responsive padding/titles, stacked review data rows | files: lib/onboardingLayout.js, components/onboarding/BudgetAmountCell.jsx, components/onboarding/QuestionScreen.jsx, components/onboarding/SplashScreen.jsx, app/(onboarding)/budget.jsx, app/(onboarding)/review.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 22:00] [Composer - impeccable quieter/typeset] Reduced visual noise and tightened product type scale: sentence-case nav/section labels, calmer eyebrow/chapter tokens, tabular budget figures, softer weights and entry display sizes | files: constants/onboarding-theme.js, components/onboarding/QuestionScreen.jsx, components/onboarding/SplashScreen.jsx, components/onboarding/BudgetAmountCell.jsx, components/onboarding/PillToggle.jsx, components/app/AppSidebar.jsx, app/(onboarding)/welcome.jsx, app/(onboarding)/budget.jsx
+
+[07-06-2026 22:30] [Composer - impeccable distill] Stripped onboarding to essentials: splash screens are heading + CTA only, removed dead illustration slot and redundant budget/review copy | files: app/(onboarding)/splash-*.jsx, components/onboarding/SplashScreen.jsx, components/onboarding/QuestionScreen.jsx, app/(onboarding)/budget.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[07-06-2026 23:00] [Composer - impeccable polish] Final onboarding pass: removed dead progressLabel props, aligned welcome/consent/review to design tokens, tightened a11y on shells and interactive states | files: app/(onboarding)/*.jsx, components/onboarding/QuestionScreen.jsx, components/onboarding/SplashScreen.jsx, components/ui/PrimaryButton.jsx, constants/onboarding-theme.js, app/(onboarding)/consent.jsx, app/(onboarding)/review.jsx, app/(onboarding)/welcome.jsx
+
+[07-06-2026 23:15] [Composer] Fixed web console warnings: USE_NATIVE_DRIVER false on web, boxShadow helper for dropdowns, month-only date parse guard for common.months.undefined | files: lib/animation.js, lib/shadow.js, lib/datePicker.js, components/onboarding/FadeUpView.jsx, components/onboarding/AnimatedRow.jsx, components/onboarding/DatePicker.jsx, app/(onboarding)/debts.jsx, components/HamburgerMenu.jsx, __tests__/lib/datePicker.test.js
+
+[07-06-2026 23:45] [Composer - audit redesign] Closed post-onboarding loop: real dashboard from setup data, sidebar expanded on first visit with persisted collapse + a11y/tooltips, shared token-aligned UI components | files: lib/householdBudget.js, lib/uiPreferences.js, components/dashboard/DashboardHome.jsx, components/dashboard/ExpandableCategoryRow.jsx, components/ui/SurfaceCard.jsx, components/ui/OutlineButton.jsx, components/app/AppScreenPlaceholder.jsx, components/app/AppSidebar.jsx, app/(app)/dashboard.jsx, app/(app)/*.jsx, lib/locales/en.json, lib/locales/cs.json, gluestack-ui.config.js, lib/budgetExport.js, lib/storage.js, lib/schema.js
+
+[08-06-2026 00:15] [Composer] Redesigned dashboard as KPI grid + expenses donut chart; tappable cards route to budget/income/expenses/goals tabs; renamed Costs nav label to Expenses | files: components/dashboard/DashboardHome.jsx, components/dashboard/DashboardKpiCard.jsx, components/dashboard/ExpensesDonutChart.jsx, components/app/AppSidebar.jsx, app/(app)/_layout.jsx, app/(app)/costs.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 01:30] [Composer] Added insights and alerts engine with structured signals for rule-based copy and future AI; extended householdBudget with recurring commitments and raw sections | files: lib/insights.js, lib/alerts.js, lib/dashboardData.js, lib/aiInsights.js, lib/householdBudget.js, __tests__/lib/insights.test.js, __tests__/lib/alerts.test.js
+
+[08-06-2026 01:45] [Composer] Redesigned dashboard home around hero daily budget, health strip, action queue, recurring commitments, AI insight card, and top categories | files: components/dashboard/DashboardHome.jsx, components/dashboard/FlexBudgetHero.jsx, components/dashboard/HealthStrip.jsx, components/dashboard/ActionQueuePreview.jsx, components/dashboard/RecurringCommitmentsCard.jsx, components/dashboard/AIInsightCard.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 02:00] [Composer] Built Summary ledger with per-section InsightSlots, Expenses drill-down with filters, and real Budget/Goals/Alerts/Income tabs to close post-onboarding loop | files: components/dashboard/BudgetSummaryTable.jsx, components/dashboard/InsightSlot.jsx, components/dashboard/SummaryContent.jsx, components/dashboard/ExpensesBreakdown.jsx, components/dashboard/DashboardPageShell.jsx, components/dashboard/BudgetContent.jsx, components/dashboard/GoalsContent.jsx, components/dashboard/AlertsContent.jsx, components/dashboard/IncomeContent.jsx, app/(app)/summary.jsx, app/(app)/costs.jsx, app/(app)/budget.jsx, app/(app)/goals.jsx, app/(app)/alerts.jsx, app/(app)/income.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 02:15] [Composer] Fixed sidebar crash: renamed dashboard screen i18n namespaces (*Screen) so nav labels stay strings; corrected debt type keys; guard t() against object values | files: lib/locales/en.json, lib/locales/cs.json, lib/i18n.js, lib/alerts.js, lib/householdBudget.js, components/dashboard/*.jsx
+
+[08-06-2026 02:20] [Composer] Fixed dashboard crash: added missing View import in AIInsightCard CTA wrapper | files: components/dashboard/AIInsightCard.jsx
+
+[08-06-2026 02:35] [Composer] Split dashboard hero metrics into tappable cards with explanation modals showing calculation breakdown and plain-language meaning | files: components/dashboard/MetricExplainCard.jsx, components/dashboard/MetricExplainModal.jsx, components/dashboard/OverviewMetricCards.jsx, components/dashboard/DashboardHome.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 03:10] [Composer] Fixed dashboard metric i18n warnings by moving modal copy to dashboard.metricExplain, building modal strings on open, deduping missing-key logs, and adding DashboardErrorBoundary | files: lib/locales/en.json, lib/locales/cs.json, lib/i18n.js, components/dashboard/OverviewMetricCards.jsx, components/dashboard/MetricExplainModal.jsx, components/dashboard/DashboardErrorBoundary.jsx, app/(app)/dashboard.jsx, __tests__/lib/i18n.test.js
+
+[08-06-2026 04:00] [Composer] Split hero budget card with savings goal panel; info icon opens modal while card navigates to tab; fixed sidebar toggle alignment, revoke icon, nav padding, and retake-questionnaire menu item | files: components/dashboard/MetricExplainCard.jsx, components/dashboard/OverviewMetricCards.jsx, components/app/AppNavIcons.jsx, components/app/AppSidebar.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 04:15] [Composer] Fixed web hydration error by making info icon a sibling Pressable instead of nesting it inside the card Pressable | files: components/dashboard/MetricExplainCard.jsx
+
+[08-06-2026 04:30] [Composer] Fixed budget table expand chevrons sitting at column edge and added web hover states on expandable rows | files: app/(onboarding)/budget.jsx, components/onboarding/BudgetExpandChevron.jsx, lib/onboardingLayout.js
+
+[08-06-2026 04:35] [Composer] Restored renderChevron alias after refactor to BudgetExpandChevron to fix runtime ReferenceError on hot reload | files: app/(onboarding)/budget.jsx
+
+[08-06-2026 04:45] [Composer] Fixed onboarding budget preview using stale saved monthlyFlexible instead of live income/costs calculation | files: app/(onboarding)/budget.jsx
+
+[08-06-2026 06:25] [Composer] Swapped dashboard frequency stepper for typography-only period switch (dot-separated, underline on active) to match flat ledger aesthetic | files: components/dashboard/DashboardFrequencyToggle.jsx
+
+[08-06-2026 06:20] [Composer] Replaced full-width frequency bar with compact fixed-size chevron stepper so control footprint stays elegant regardless of card width | files: components/dashboard/DashboardFrequencyToggle.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 06:15] [Composer] Replaced dashboard frequency pills with a single segmented bar control for a calmer ledger-style switch | files: components/dashboard/DashboardFrequencyToggle.jsx
+
+[08-06-2026 06:10] [Composer] Made dashboard frequency pills equal width via flex layout in shared toggle component | files: components/dashboard/DashboardFrequencyToggle.jsx
+
+[08-06-2026 06:00] [Composer] Redesigned dashboard metric cards (spending budget + goal tracking split, frequency toggles, footer labels), moved recurring commitments to Expenses tab, modernized top costs table and expenses breakdown, and fixed budget edit to open editable q14 without back nav | files: components/dashboard/OverviewMetricCards.jsx, components/dashboard/MetricExplainCard.jsx, components/dashboard/StatusChip.jsx, components/dashboard/DashboardFrequencyToggle.jsx, components/dashboard/TopCostsTable.jsx, components/dashboard/ExpensesOverviewCard.jsx, components/dashboard/FixedRecurringSummary.jsx, components/dashboard/DashboardHome.jsx, components/dashboard/ExpensesContent.jsx, components/dashboard/RecurringCommitmentsCard.jsx, components/dashboard/formatDashboardAmount.js, lib/useDashboardFrequency.js, lib/uiPreferences.js, components/onboarding/QuestionScreen.jsx, app/(onboarding)/budget.jsx, app/(onboarding)/income.jsx, app/(onboarding)/housing.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/i18n.test.js
+
+[08-06-2026 15:00] [Composer] Fixed splash-pets back loop for solo households — back goes to health instead of children-costs which auto-forwarded to splash-pets | files: app/(onboarding)/splash-pets.jsx
+
+[08-06-2026 14:45] [Composer] Fixed empty income expand on budget table — no chevron, no 200px blank panel when income is zero | files: app/(onboarding)/budget.jsx
+
+[08-06-2026 14:30] [Composer] Fixed income screen progress TDZ crash; solo household now skips children questions and saves with empty children | files: app/(onboarding)/income.jsx, app/(onboarding)/household.jsx
+
+[08-06-2026 14:10] [Composer] Swapped income icon to wallet and budget icon to pie chart for clearer nav distinction | files: components/app/AppNavIcons.jsx
+
+[08-06-2026 14:00] [Composer] Updated sidebar nav icons — income to banknotes, budget to piggy bank, goals to target bullseye | files: components/app/AppNavIcons.jsx
+
+[08-06-2026 13:45] [Composer] Sized Gluestack GlobeIcon to 18px and wired explicit muted/primary stroke so it matches other sidebar icons | files: components/app/LanguageSelector.jsx
+
+[08-06-2026 13:30] [Composer] Swapped custom globe SVG for Gluestack GlobeIcon in language selector | files: components/app/LanguageSelector.jsx, components/app/AppNavIcons.jsx
+
+[08-06-2026 13:15] [Composer] Fixed language trigger collapse — fixed icon slot and animated label clip like other sidebar rows so globe no longer vanishes | files: components/app/LanguageSelector.jsx, components/app/AppSidebar.jsx
+
+[08-06-2026 13:00] [Composer] Redesigned language selector with card trigger, floating dropdown, flag rows, and grid-style globe icon per reference | files: components/app/LanguageSelector.jsx, components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx
+
+[08-06-2026 12:35] [Composer] Restored language row to standard sidebar nav style; fixed wireframe globe icon with side longitude arcs instead of basketball-like seams | files: components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx
+
+[08-06-2026 12:20] [Composer] Nudged sidebar toggle left, wireframe globe language pill with full-width simplified dropdown options | files: components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx
+
+[08-06-2026 12:00] [Composer] Polished AppSidebar — toggle hover inset, collapse icon flicker fix, scrollable nav on short viewports, cross-platform withdraw-consent confirm with full data wipe, modernized language picker | files: components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx, components/ui/ConfirmDialog.jsx, lib/consent.js, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 16:20] [Composer] Government charge Yes/No toggles now span full card width below amount input | files: app/(onboarding)/housing.jsx
+
+[08-06-2026 16:15] [Composer] Moved Yes/No toggles below amount input on Government and city charges cards for clearer read order | files: app/(onboarding)/housing.jsx
+
+[08-06-2026 16:00] [Composer] Waste tax pre-fill now scales with household size and child age groups (CZ estimate from 1 080 Kč/adult) while remaining user-editable | files: lib/wasteTax.js, app/(onboarding)/housing.jsx, lib/schema.js, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/wasteTax.test.js
+
+[08-06-2026 15:00] [Composer] Added custom utility rows on itemized housing utilities step — add-other below garbage, rows stay above combined total, persisted in pocketos_housing | files: app/(onboarding)/housing.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 14:30] [Composer] Restructured financial goals — savings balance only on q5c, goal type picker (reduce/save/both), target vs ongoing saving flow, monthly target moved to goal step | files: lib/incomeGoals.js, app/(onboarding)/income.jsx, lib/insights.js, lib/dashboardData.js, app/(onboarding)/budget.jsx, components/dashboard/GoalsContent.jsx, components/dashboard/DashboardHome.jsx, components/dashboard/OverviewMetricCards.jsx, components/dashboard/BudgetContent.jsx, components/section-edit/forms/IncomeEdit.jsx, components/section-edit/forms/BudgetEdit.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/incomeGoals.test.js
+
+[08-06-2026 13:15] [Composer] Smart income routing for non-working households — skip to partner salary or other-income step, require income when neither works, and block continue with clear validation | files: lib/incomeFlow.js, app/(onboarding)/income.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/incomeFlow.test.js
+
+[08-06-2026 12:00] [Composer] Fixed phantom budget line items — map health `user` key correctly, ignore stale child insurance without children, and only show family contributions for live-with-family households with explicit yes | files: lib/healthMembers.js, lib/householdBudget.js, app/(onboarding)/budget.jsx, app/(onboarding)/housing.jsx, app/(onboarding)/health.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/healthMembers.test.js, __tests__/lib/householdBudget.test.js
+
+[08-06-2026 05:30] [Composer] Fixed section edit modal showing Continue and stepping through onboarding — edit mode now always shows Save, persists immediately, and closes without advancing steps | files: lib/finishOnboardingSection.js, app/(onboarding)/income.jsx, app/(onboarding)/housing.jsx, app/(onboarding)/transport.jsx, app/(onboarding)/health.jsx, app/(onboarding)/children-costs.jsx, app/(onboarding)/pets.jsx, app/(onboarding)/debts.jsx, app/(onboarding)/budget.jsx, app/(onboarding)/subscriptions.jsx, app/(onboarding)/other-costs.jsx
+
+[08-06-2026 12:00] [Composer] Prepaid fixed health insurance with renew plan now amortizes renewal savings over months remaining instead of dividing by payment frequency; UI offers suggested or custom monthly reserve when renewal is soon and savings are low | files: lib/healthInsuranceBudget.js, lib/householdBudget.js, app/(onboarding)/health.jsx, lib/schema.js, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/healthInsuranceBudget.test.js, __tests__/lib/householdBudget.test.js
+
+[08-06-2026 12:30] [Composer] Switch-plan health insurance now uses the same months-until-renewal savings planning as renew-same; clarified copy that renew means same period and amount while switch accepts expected new premium estimates | files: lib/healthInsuranceBudget.js, app/(onboarding)/health.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/healthInsuranceBudget.test.js
+
+[08-06-2026 13:00] [Composer] Renamed private health premium label to Premium (frequency is separate) and added Custom frequency pill with months input on expected renewal premium | files: app/(onboarding)/health.jsx, lib/schema.js, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 13:15] [Composer] Removed inner blue focus ring on currency amount inputs — outer container border already signals focus | files: components/ui/FormInput.jsx
+
+[08-06-2026 13:45] [Composer] Added spending-vs-savings slider under budget display frequency so users can lower their preview budget and redirect the difference to monthly savings | files: lib/budgetSplit.js, components/onboarding/BudgetSplitSlider.jsx, app/(onboarding)/budget.jsx, lib/householdBudget.js, lib/dashboardData.js, lib/schema.js, components/section-edit/forms/BudgetEdit.jsx, components/dashboard/BudgetContent.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/budgetSplit.test.js
+
+[08-06-2026 14:00] [Composer] Budget split slider now snaps spending to 500-unit increments so savings shift in clean round amounts | files: lib/budgetSplit.js, components/onboarding/BudgetSplitSlider.jsx, app/(onboarding)/budget.jsx, components/section-edit/forms/BudgetEdit.jsx, __tests__/lib/budgetSplit.test.js
+
+[08-06-2026 14:15] [Composer] Made Add another pet button full width on pets screen by switching from inline AddChip to AddAnotherButton | files: app/(onboarding)/pets.jsx
+
+[08-06-2026 14:20] [Composer] Fixed pets screen AddChip is not defined crash by ensuring AddAnotherButton is used consistently; default AddAnotherButton to full width | files: app/(onboarding)/pets.jsx, components/onboarding/AddAnotherButton.jsx
+
+[08-06-2026 15:00] [Composer] Expanded rollover strategy copy with free/capped/reset explanations, custom cap amount, reset-to-savings options, and new Savings tab with projection chart and dashboard total-savings card | files: app/(onboarding)/budget.jsx, lib/savingsProjection.js, lib/schema.js, components/dashboard/SavingsContent.jsx, components/dashboard/SavingsProjectionChart.jsx, components/dashboard/DashboardHome.jsx, components/section-edit/forms/BudgetEdit.jsx, components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx, app/(app)/savings.jsx, app/(app)/_layout.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/savingsProjection.test.js
+
+[08-06-2026 15:15] [Composer] Completed Czech locale parity for savings screen and review rollover/reset detail rows so onboarding choices surface consistently | files: lib/locales/cs.json, lib/locales/en.json, app/(onboarding)/review.jsx
+
+[08-06-2026 16:00] [Composer] Added looseMoneyBalance tracking, month-end routing with auto-close on dashboard load, live month-end preview/history cards, and clearer Q14a copy for loose-cash destination | files: lib/dailyLog.js, lib/monthEndRouting.js, lib/schema.js, lib/dashboardData.js, lib/savingsProjection.js, components/dashboard/MonthEndPreviewCard.jsx, components/dashboard/MonthEndHistoryList.jsx, components/dashboard/BudgetContent.jsx, components/dashboard/SavingsContent.jsx, components/dashboard/DashboardHome.jsx, app/(onboarding)/budget.jsx, components/section-edit/forms/BudgetEdit.jsx, app/(onboarding)/review.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/monthEndRouting.test.js
+
+[08-06-2026 16:30] [Composer] Added Tracker tab with daily/weekly/monthly spending pace previews and moved month-end history off Budget/Savings so users get frequent feedback before month close | files: lib/trackerPreview.js, lib/dailyLog.js, components/dashboard/TrackerContent.jsx, components/dashboard/TrackerPeriodCard.jsx, app/(app)/tracker.jsx, components/app/AppSidebar.jsx, components/app/AppNavIcons.jsx, app/(app)/_layout.jsx, components/dashboard/BudgetContent.jsx, components/dashboard/SavingsContent.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/trackerPreview.test.js
+
+[08-06-2026 16:45] [Composer] Replaced Budget and Savings sidebar icons with tune-sliders and bank glyphs so they read distinctly from Income wallet and Summary charts | files: components/app/AppNavIcons.jsx
+
+[08-06-2026 17:00] [Composer] Swapped Savings nav icon to a minimalist piggy bank with coin slot so it reads clearly at small sizes | files: components/app/AppNavIcons.jsx
+
+[08-06-2026 17:10] [Composer] Redesigned Savings icon as side-profile piggy with visible slot, legs, and snout because single-blob silhouette was unreadable at 18px | files: components/app/AppNavIcons.jsx
+
+[09-06-2026 01:05] [Composer] Replaced hand-drawn Budget and Savings nav icons with official Lucide Banknote and PiggyBank via lucide-react-native so icons render correctly at sidebar size | files: package.json, package-lock.json, components/app/AppNavIcons.jsx
+
+[09-06-2026 01:15] [Composer] Fixed Metro build by removing lucide-react-native and embedding official Lucide stroke paths in LucideStrokeIcon; moved react-native-svg to production dependencies | files: package.json, package-lock.json, components/app/LucideStrokeIcon.jsx, components/app/lucidePaths.js, components/app/AppNavIcons.jsx
+
+[09-06-2026 01:25] [Composer] Standardized sidebar nav icons on official Lucide glyphs per tab mapping (layout-dashboard, circle-dollar-sign, handbag, scale, clipboard-clock, goal, piggy-bank, chart-line, clipboard-pen) | files: components/app/lucidePaths.js, components/app/AppNavIcons.jsx
+
+[09-06-2026 01:30] [Composer] Replaced Alerts tab icon with Lucide bell to match the rest of the stroke nav set | files: components/app/lucidePaths.js, components/app/AppNavIcons.jsx
+
+[09-06-2026 01:35] [Composer] Replaced sidebar menu toggle with Lucide columns-2 icon for consistent two-panel affordance | files: components/app/lucidePaths.js, components/app/AppNavIcons.jsx
+
+[09-06-2026 01:40] [Composer] Swapped language selector and withdraw-consent sidebar icons to Lucide languages and sticky-note-x | files: components/app/lucidePaths.js, components/app/AppNavIcons.jsx, components/app/LanguageSelector.jsx
+
+[08-06-2026 05:15] [Composer] Added in-app section edit modal so each tab can update its onboarding data without retaking the questionnaire; reuses onboarding screens in transparent overlay with Save/close flow and dashboard refresh on save | files: lib/SectionEditContext.jsx, lib/finishOnboardingSection.js, lib/sectionEditRegistry.js, lib/dashboardRefresh.js, lib/householdBudget.js, components/app/SectionEditShell.jsx, components/app/EditSectionButton.jsx, components/dashboard/DashboardPageShell.jsx, components/onboarding/QuestionScreen.jsx, app/(app)/edit/_layout.jsx, app/(app)/edit/[section].jsx, app/(app)/income.jsx, app/(app)/budget.jsx, app/(app)/goals.jsx, app/(onboarding)/income.jsx, app/(onboarding)/housing.jsx, app/(onboarding)/transport.jsx, app/(onboarding)/health.jsx, app/(onboarding)/children-costs.jsx, app/(onboarding)/pets.jsx, app/(onboarding)/subscriptions.jsx, app/(onboarding)/other-costs.jsx, app/(onboarding)/debts.jsx, app/(onboarding)/budget.jsx, components/dashboard/IncomeContent.jsx, components/dashboard/BudgetContent.jsx, components/dashboard/GoalsContent.jsx, components/dashboard/DashboardHome.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 05:25] [Composer] Goal tracking card shows total saved balance with daily/weekly/monthly save pace toggle; dashboard metric cards show tab Lucide icons left of titles | files: components/dashboard/OverviewMetricCards.jsx, components/dashboard/MetricExplainCard.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 05:30] [Composer] Swapped Savings tab icon from piggy-bank to Lucide hand-coins for clearer money-in-hand affordance | files: components/app/lucidePaths.js, components/app/AppNavIcons.jsx
+
+[08-06-2026 05:40] [Composer] Moved Fixed load and Recurring costs cards from dashboard to Summary tab so home shows only headline numbers; dashboard keeps Budget flexibility | files: components/dashboard/OverviewMetricCards.jsx, components/dashboard/SummaryContent.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 05:55] [Composer] Added 2×2 tinted snapshot grid (income, expenses, savings goal, budget flexibility) below hero cards with goal deadline/monthly labels and subtle per-metric color cues | files: components/dashboard/DashboardSnapshotGrid.jsx, components/dashboard/dashboardCardTones.js, components/dashboard/MetricExplainCard.jsx, components/dashboard/OverviewMetricCards.jsx, components/dashboard/DashboardHome.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 06:05] [Composer] Added info-button explain modals for Total income, Total expenses, and Saving goal snapshot cards | files: components/dashboard/DashboardSnapshotGrid.jsx, components/dashboard/OverviewMetricCards.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 06:10] [Composer] Snapshot card info buttons now use each card tone palette (green income, rose expenses, blue goal, navy flexibility) | files: components/dashboard/MetricExplainCard.jsx
+
+[08-06-2026 06:15] [Composer] Removed on-track/behind status chip from Goal tracking hero card to reduce visual noise | files: components/dashboard/OverviewMetricCards.jsx
+
+[08-06-2026 06:35] [Composer] Unified Income, Expenses, and Budget tabs on hero-number-first layout with inline income/expense edits, donut chart, ledger tables, and AI insight cards | files: components/dashboard/TabHeroMetric.jsx, components/dashboard/SectionAIInsightCard.jsx, components/dashboard/IncomeStreamCard.jsx, components/dashboard/LedgerDataTable.jsx, components/dashboard/ExpenseItemEditPanel.jsx, components/dashboard/IncomeContent.jsx, components/dashboard/ExpensesContent.jsx, components/dashboard/BudgetContent.jsx, lib/inlineIncomeSave.js, lib/inlineExpenseSave.js, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 06:45] [Composer] Added dashboard↔tab enter animations (Reanimated focus transitions + stack slide) when navigating from metric cards or sidebar | files: lib/screenTransition.js, components/app/ScreenTransitionShell.jsx, app/(app)/_layout.jsx, app/(app)/dashboard.jsx, components/dashboard/DashboardPageShell.jsx, components/dashboard/OverviewMetricCards.jsx, components/dashboard/DashboardHome.jsx, components/app/AppSidebar.jsx
+
+[08-06-2026 06:55] [Composer] Broke householdBudget↔sectionEditRegistry require cycles by extracting sectionEditPaths, householdCosts, and goalGap leaf modules | files: lib/sectionEditPaths.js, lib/householdCosts.js, lib/goalGap.js, lib/householdBudget.js, lib/sectionEditRegistry.js, lib/insights.js, lib/alerts.js, components/section-edit/forms/BudgetEdit.jsx
+
+[08-06-2026 07:10] [Composer] Rebuilt Expenses tab with nested underline tabs (fixed vs recurring, then category), per-category donut chart and category/subcategory table, and dual AI insights above and below total monthly hero | files: components/dashboard/ExpensesContent.jsx, components/dashboard/ExpenseUnderlineTabBar.jsx, components/dashboard/ExpensesCategoryPanel.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 07:25] [Composer] Refined Expenses nested tabs with Overall-first sub-tabs, category-only donut on overall, three-column chart legend, subcategory breakdown table on overall and editable detail rows with amount/frequency/dates; fixed category ordering so subscriptions and other are not dropped | files: components/dashboard/ExpensesContent.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/ExpensesDonutChart.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 07:35] [Composer] Added common.fortnightly locale key and moved MetricExplainCard pointerEvents into style to silence web deprecation warnings | files: lib/locales/en.json, lib/locales/cs.json, components/dashboard/MetricExplainCard.jsx
+
+[08-06-2026 07:50] [Composer] Restructured Expenses subtabs by expense type (fixed: rent/utilities/taxes; recurring: subscriptions/pets/internet/etc.), always show all subtabs with empty-state copy, and unified costs/commitments wording to expenses | files: lib/expensePanels.js, components/dashboard/ExpensesContent.jsx, components/dashboard/ExpensesCategoryPanel.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 08:00] [Composer] Limited Category breakdown title to Overall sub-tab and replaced row expand chevrons with per-item Edit buttons on expense detail tables | files: components/dashboard/LedgerDataTable.jsx, components/dashboard/ExpensesCategoryPanel.jsx
+
+[08-06-2026 08:15] [Composer] Renamed Overall to Overview and enabled inline per-field expense editing for all types (no section editor redirect) via patchExpenseRow | files: lib/inlineExpenseSave.js, lib/expensePanels.js, components/dashboard/ExpenseItemEditPanel.jsx, components/dashboard/ExpensesContent.jsx, components/dashboard/ExpensesCategoryPanel.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 08:30] [Composer] Moved AI insight below Total expenses hero with frequency toggle, promoted Overview to primary tab showing all expenses, added Cancel/Save edit actions with spacing, and inline Add button on empty expense sub-tabs | files: components/dashboard/ExpensesContent.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/ExpenseItemEditPanel.jsx, components/dashboard/LedgerDataTable.jsx, components/dashboard/TabHeroMetric.jsx, lib/inlineExpenseSave.js, lib/expensePanels.js, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 09:00] [Composer] Enlarged overview donut chart with equal legend columns and header divider, applied consistent tab/button hover states, and replaced generic expense edit fields with onboarding-matched inputs per expense type | files: components/dashboard/ExpensesDonutChart.jsx, components/dashboard/ExpenseUnderlineTabBar.jsx, components/dashboard/LedgerDataTable.jsx, components/dashboard/ExpenseItemEditPanel.jsx, components/dashboard/ExpenseOnboardingFields.jsx, lib/expenseEditFieldConfig.js, lib/pressableHover.js, lib/inlineExpenseSave.js, lib/expensePanels.js, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 09:15] [Composer] Tightened chart legend with vertical dividers and larger pie, centered Edit hover text, and replaced flat Category breakdown with expandable category→subcategory table matching onboarding review pattern | files: components/dashboard/ExpensesDonutChart.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/LedgerDataTable.jsx
+
+[08-06-2026 09:25] [Composer] Packed Expenses-by-category legend toward center with fixed-width amount/share columns, removed vertical dividers, left-aligned names and centered numeric columns | files: components/dashboard/ExpensesDonutChart.jsx
+
+[08-06-2026 09:30] [Composer] Matched monthly and share legend column widths equally in Expenses-by-category chart | files: components/dashboard/ExpensesDonutChart.jsx
+
+[08-06-2026 09:35] [Composer] Increased horizontal gap between Expenses-by-category legend columns for clearer separation | files: components/dashboard/ExpensesDonutChart.jsx
+
+[08-06-2026 09:40] [Composer] Doubled Expenses-by-category legend column gap to 32px | files: components/dashboard/ExpensesDonutChart.jsx
+
+[08-06-2026 09:50] [Composer] Widened chart item column and centered pie+legend as a unit; regrouped Category breakdown into onboarding sections (Housing→Rent/Utilities) with expand-all and no vertical dividers | files: components/dashboard/ExpensesDonutChart.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx, lib/expensePanels.js
+
+[08-06-2026 10:00] [Composer] Show share % to 2dp in Expenses-by-category chart with extra bottom padding; centered Category breakdown columns with wider monthly/share widths | files: components/dashboard/ExpensesDonutChart.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx
+
+[08-06-2026 10:15] [Composer] Added shared DashboardSectionHeader with section-wide divider, Category breakdown CSV/XLSX/PDF export, and unified subsection headers across dashboard tabs | files: components/dashboard/DashboardSectionHeader.jsx, components/dashboard/DashboardTableExportActions.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/LedgerDataTable.jsx, lib/expenseBreakdownExport.js, lib/budgetExport.js, lib/locales/en.json, lib/locales/cs.json, components/dashboard/IncomeContent.jsx, components/dashboard/SummaryContent.jsx, components/dashboard/FixedRecurringSummary.jsx, components/dashboard/TopCostsTable.jsx, components/dashboard/ActionQueuePreview.jsx, components/dashboard/RecurringCommitmentsCard.jsx, components/dashboard/SavingsContent.jsx, components/dashboard/TrackerContent.jsx, components/dashboard/ExpensesOverviewCard.jsx
+
+[08-06-2026 10:25] [Composer] Replaced Category breakdown inline export chips with Export dropdown listing CSV, XLSX, and PDF options | files: components/dashboard/DashboardTableExportActions.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 10:35] [Composer] Fixed export menu stacking via Modal overlay and modernized dropdown trigger and option styling | files: components/dashboard/DashboardTableExportActions.jsx
+
+[08-06-2026 11:00] [Composer] Widened export dropdown, added smooth expand/collapse and tab/page enter animations via shared motion helpers | files: lib/dashboardMotion.js, components/dashboard/AnimatedCollapse.jsx, components/dashboard/DashboardTabPanel.jsx, components/dashboard/DashboardTableExportActions.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx, components/dashboard/ExpensesContent.jsx, components/app/ScreenTransitionShell.jsx, lib/screenTransition.js, app/(app)/_layout.jsx
+
+[08-06-2026 11:05] [Composer] Fixed Expenses crash by importing typography token T in ExpensesCategoryPanel | files: components/dashboard/ExpensesCategoryPanel.jsx
+
+[08-06-2026 11:15] [Composer] Replaced fade-only Category breakdown expand with height-based collapse so close animates smoothly in both directions | files: components/dashboard/AnimatedCollapse.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx
+
+[08-06-2026 11:45] [Composer] Expenses overview chart uses section-level categories with equal card padding, frequency toggles, tighter columns, and sidebar icon/spacing tweaks | files: lib/expensePanels.js, components/dashboard/ExpensesDonutChart.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx, components/dashboard/ExpensesContent.jsx, components/app/AppSidebar.jsx, components/app/LanguageSelector.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 12:00] [Composer] Show Category breakdown share percentages to 2 decimal places to match the expenses chart | files: components/dashboard/ExpensesCategoryBreakdown.jsx
+
+[08-06-2026 12:05] [Composer] Fixed pct is not defined crash by centralising formatSharePct in lib/formatSharePct.js | files: lib/formatSharePct.js, components/dashboard/ExpensesCategoryBreakdown.jsx, components/dashboard/ExpensesDonutChart.jsx, components/dashboard/ExpensesCategoryPanel.jsx
+
+[08-06-2026 12:10] [Composer] Renamed Category breakdown section title to Expenses breakdown in EN and CS locales | files: lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 12:15] [Composer] Frequency column headers in expenses chart and breakdown now follow daily/weekly/monthly toggle selection | files: components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx
+
+[08-06-2026 12:20] [Composer] Use Daily/Weekly/Monthly column labels instead of Per day/week/month in expenses chart and breakdown | files: components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/ExpensesCategoryBreakdown.jsx
+
+[08-06-2026 12:25] [Composer] Widened Expenses breakdown Export trigger and dropdown for clearer tap target | files: components/dashboard/DashboardTableExportActions.jsx
+
+[08-06-2026 12:30] [Composer] Increased Export button min-width to 128px and dropdown to 260px per user request | files: components/dashboard/DashboardTableExportActions.jsx
+
+[08-06-2026 12:35] [Composer] Equalised Fixed and Recurring expense detail table column widths and gaps | files: components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/LedgerDataTable.jsx
+
+[08-06-2026 12:40] [Composer] Fixed sidebar icon flicker on expand by absolute-positioning labels and animating opacity only | files: components/app/AppSidebar.jsx, components/app/LanguageSelector.jsx
+
+[08-06-2026 12:45] [Composer] Center collapsed sidebar icons by animating row paddingLeft to match the 68px rail width | files: components/app/AppSidebar.jsx, components/app/LanguageSelector.jsx
+
+[08-06-2026 13:00] [Composer] Unified Income tab with Expenses design — overview donut chart, frequency toggle, primary/secondary tabs, inline ledger edit; removed header Edit button | files: components/dashboard/IncomeContent.jsx, components/dashboard/IncomeCategoryPanel.jsx, components/dashboard/IncomeStreamsBreakdown.jsx, components/dashboard/IncomeItemEditPanel.jsx, lib/incomePanels.js, app/(app)/income.jsx, components/dashboard/DashboardPageShell.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/incomePanels.test.js
+
+[08-06-2026 13:05] [Composer] Fixed Income tab crash by reading household from dashboard bundle instead of calling getData without import | files: components/dashboard/IncomeContent.jsx
+
+[08-06-2026 13:10] [Composer] Moved pointerEvents from deprecated View prop to style in sidebar labels to silence RN Web warning | files: components/app/AppSidebar.jsx, components/app/LanguageSelector.jsx
+
+[08-06-2026 13:15] [Composer] Kept sidebar right border visible when collapsed by moving it to the clipping wrapper instead of the inner panel | files: components/app/AppSidebar.jsx
+
+[08-06-2026 13:20] [Composer] Swapped Savings tab sidebar icon from hand-coins to Lucide wallet for clearer savings affordance | files: components/app/lucidePaths.js, components/app/AppNavIcons.jsx
+
+[08-06-2026 13:25] [Composer] Fixed donut chart not rendering when one source is 100% by splitting full 360° SVG arcs | files: lib/donutSegment.js, components/dashboard/ExpensesDonutChart.jsx, __tests__/lib/donutSegment.test.js
+
+[08-06-2026 13:30] [Composer] Added expand/collapse-all income breakdown rows grouped by Main income and Other sources to match Expenses table UX | files: lib/incomePanels.js, components/dashboard/IncomeStreamsBreakdown.jsx, __tests__/lib/incomePanels.test.js
+
+[08-06-2026 13:35] [Composer] Stack donut chart above legend on narrow viewports for Income and Expenses overview charts | files: components/dashboard/ExpensesDonutChart.jsx
+
+[08-06-2026 14:15] [Composer] P0 trust fixes — unified committed-costs label/math via committedMonthlyLoad; Expenses hero shows fixed+debt breakdown | files: lib/finance.js, components/dashboard/ExpensesContent.jsx, components/dashboard/ExpensesCategoryPanel.jsx, components/dashboard/DashboardSnapshotGrid.jsx, components/dashboard/OverviewMetricCards.jsx, components/dashboard/TabHeroMetric.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/finance.test.js
+
+[08-06-2026 14:15] [Composer] Added Dashboard ledger strip (Income → Committed → To spend) with tab navigation | files: components/dashboard/HouseholdLedgerStrip.jsx, components/dashboard/DashboardHome.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 14:15] [Composer] Post-save feedback banner shows updated spending budget after inline Income/Expenses edits | files: lib/inlineSaveImpact.js, lib/dashboardSaveFeedback.js, components/dashboard/SaveFeedbackBanner.jsx, components/dashboard/IncomeItemEditPanel.jsx, components/dashboard/ExpenseItemEditPanel.jsx, components/dashboard/DashboardPageShell.jsx, components/dashboard/IncomeCategoryPanel.jsx, components/dashboard/ExpensesCategoryPanel.jsx
+
+[08-06-2026 14:45] [Composer] P2 tab polish — smart breakdown expand for single-source profiles; flat sections skip redundant collapse | files: lib/breakdownExpand.js, components/dashboard/ExpensesCategoryBreakdown.jsx, components/dashboard/IncomeStreamsBreakdown.jsx, __tests__/lib/breakdownExpand.test.js
+
+[08-06-2026 14:45] [Composer] Income export parity with Expenses — CSV/XLSX/PDF on income breakdown table | files: lib/incomeBreakdownExport.js, components/dashboard/IncomeStreamsBreakdown.jsx
+
+[08-06-2026 14:45] [Composer] Expenses Fixed vs Recurring plain-language tab helpers under primary tabs | files: components/dashboard/ExpensesContent.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 15:00] [Composer] P1 return visits — tracker snapshot card on Dashboard (today/week pace vs allowance) | files: components/dashboard/TrackerSnapshotCard.jsx, components/dashboard/DashboardHome.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 15:00] [Composer] P1 month-end status card on Dashboard — rollover balance, last close, projected routing | files: components/dashboard/MonthEndStatusCard.jsx, lib/monthEndLabels.js, components/dashboard/DashboardHome.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 15:00] [Composer] P1 action queue — urgency sort, insight alerts, primary CTA per row; high-APR routes to Expenses | files: lib/dashboardAlerts.js, components/dashboard/ActionQueuePreview.jsx, lib/alerts.js, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 15:20] [Composer] Extended ledger strip to Income → Committed → Flexible budget → Left with rollover-aware remaining and 2×2 layout on narrow screens | files: lib/ledgerLeft.js, components/dashboard/HouseholdLedgerStrip.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/ledgerLeft.test.js
+
+[08-06-2026 16:30] [Composer] Ledger strip shows monthly plan only — Income → Committed → Available → To spend; footnote when savings shift splits available from spending cap | files: components/dashboard/HouseholdLedgerStrip.jsx, lib/locales/en.json, lib/locales/cs.json
+
+[08-06-2026 18:00] [Composer] Vertical plan ledger cascade (Income→Committed→Available→Saved/Costs reduced→To spend→Unallocated) with deduct-aware math, cost-reduction baseline, conditional unallocated slider on Budget, dashboard KPI dedup | files: lib/ledgerCascade.js, lib/costReductionProgress.js, components/dashboard/HouseholdLedgerStrip.jsx, components/dashboard/DashboardHome.jsx, components/dashboard/BudgetContent.jsx, lib/dashboardData.js, app/(onboarding)/review.jsx, lib/schema.js, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/ledgerCascade.test.js, __tests__/lib/costReductionProgress.test.js
+
+[08-06-2026 18:30] [Composer] Keep budget savings slider visible at full spending (gate on available ≥500, not current unallocated) so users can shift back toward savings | files: lib/ledgerCascade.js, components/dashboard/BudgetContent.jsx, lib/locales/en.json, lib/locales/cs.json, __tests__/lib/ledgerCascade.test.js
+
+[08-06-2026 19:00] [Composer] Animate budget slider updates — collapse for savings-shift line, fade on changing amounts, optimistic split preview | files: components/dashboard/AnimatedMetricText.jsx, components/dashboard/BudgetContent.jsx, components/dashboard/HouseholdLedgerStrip.jsx, components/dashboard/TabHeroMetric.jsx
+
+[08-06-2026 19:15] [Composer] Limit budget slider animation to savings-shift line expand/collapse only; steady copy updates instantly | files: components/dashboard/BudgetContent.jsx, components/dashboard/HouseholdLedgerStrip.jsx, components/dashboard/TabHeroMetric.jsx
+
+[08-06-2026 19:20] [Composer] Move calculated available to top of Budget details card so the flow reads available → spending → savings shift | files: components/dashboard/BudgetContent.jsx
+
+[08-06-2026 20:00] [Composer] Rebrand to Bida — Your wallet patron (EN) / Patron vaší peněženky (CS); locales, welcome, sidebar, app.json, PRODUCT.md, DESIGN.md | files: lib/locales/en.json, lib/locales/cs.json, app/(onboarding)/welcome.jsx, components/app/AppSidebar.jsx, app.json, package.json, PRODUCT.md, DESIGN.md, __tests__/lib/i18n.test.js
+
+[08-06-2026 20:05] [Composer] Fix sidebar header still showing Pocket/OS — use t('app.name') in top brand row and B monogram in collapsed rail | files: components/app/AppSidebar.jsx
+
+[08-06-2026 20:10] [Composer] Sidebar Bida header — larger type (23px) and extra left inset for brand alignment | files: components/app/AppSidebar.jsx

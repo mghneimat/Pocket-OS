@@ -5,10 +5,15 @@
 import {
   toMonthly,
   dailyAllowance,
+  weeklyAllowance,
+  displayBudget,
   debtPayoff,
   formatCurrency,
   totalMonthlyCosts,
   availableBudget,
+  effectiveSpendingBudget,
+  committedMonthlyLoad,
+  sumCommittedLoad,
 } from '../../lib/finance';
 
 describe('toMonthly', () => {
@@ -64,6 +69,42 @@ describe('dailyAllowance', () => {
 
   test('returns 0 for negative budget', () => {
     expect(dailyAllowance(-1000, 30)).toBe(0);
+  });
+});
+
+describe('weeklyAllowance', () => {
+  test('calculates weekly allowance from monthly budget', () => {
+    expect(weeklyAllowance(433)).toBeCloseTo(100, 0);
+  });
+
+  test('returns 0 for zero budget', () => {
+    expect(weeklyAllowance(0)).toBe(0);
+  });
+
+  test('returns 0 for negative budget', () => {
+    expect(weeklyAllowance(-1000)).toBe(0);
+  });
+});
+
+describe('displayBudget', () => {
+  test('returns daily amount by default', () => {
+    expect(displayBudget(3000, 'daily', 30)).toBe(100);
+  });
+
+  test('returns weekly amount', () => {
+    expect(displayBudget(433, 'weekly')).toBeCloseTo(100, 0);
+  });
+
+  test('returns monthly amount unchanged', () => {
+    expect(displayBudget(15000, 'monthly')).toBe(15000);
+  });
+
+  test('defaults to daily for unknown frequency', () => {
+    expect(displayBudget(3000, 'unknown', 30)).toBe(100);
+  });
+
+  test('returns 0 for zero monthly budget', () => {
+    expect(displayBudget(0, 'weekly')).toBe(0);
   });
 });
 
@@ -165,5 +206,30 @@ describe('availableBudget', () => {
   test('can return negative budget', () => {
     const result = availableBudget(3000, 2500, 1000);
     expect(result).toBe(-500);
+  });
+});
+
+describe('effectiveSpendingBudget', () => {
+  test('returns base when deduction disabled', () => {
+    expect(effectiveSpendingBudget(10000, 3000, false)).toBe(10000);
+  });
+
+  test('subtracts savings goal when deduction enabled', () => {
+    expect(effectiveSpendingBudget(10000, 3000, true)).toBe(7000);
+  });
+
+  test('does not go below zero', () => {
+    expect(effectiveSpendingBudget(2000, 5000, true)).toBe(0);
+  });
+});
+
+describe('committedMonthlyLoad', () => {
+  test('sums fixed costs and debt payments from financials', () => {
+    expect(committedMonthlyLoad({ fixedCosts: 12000, debtPayments: 3500 })).toBe(15500);
+  });
+
+  test('sumCommittedLoad handles missing values', () => {
+    expect(sumCommittedLoad(undefined, null)).toBe(0);
+    expect(sumCommittedLoad(100, 50)).toBe(150);
   });
 });

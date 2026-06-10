@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, TextInput } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import OptionCard from '../../components/onboarding/OptionCard';
+import LabeledInput from '../../components/onboarding/LabeledInput';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
 
 const OCCUPATIONS = [
@@ -25,27 +25,16 @@ const OCCUPATIONS = [
  * @param {(text: string) => void} props.onChangeText - Text change handler
  * @param {string} props.placeholder - Placeholder text
  */
-function AnimatedOtherInput({ visible, value, onChangeText, placeholder }) {
+function AnimatedOtherInput({ visible, value, onChangeText, placeholder, label }) {
   return (
     <AnimatedSlideIn visible={visible} duration={250}>
-      <TextInput
+      <LabeledInput
+        label={label}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#C4C2BC"
-        style={{
-          backgroundColor: '#FDFCFA',
-          borderWidth: 1.5,
-          borderColor: '#E4E2DC',
-          borderRadius: 10,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          color: '#1A1A1A',
-          fontSize: 17,
-          fontWeight: '300',
-          marginTop: 4,
-        }}
         maxLength={100}
+        containerStyle={{ marginTop: 4 }}
       />
     </AnimatedSlideIn>
   );
@@ -144,13 +133,10 @@ export default function OccupationScreen() {
         chapter={t('onboarding.location.chapter')}
         title={t('onboarding.occupation.title')}
         helper={t('onboarding.occupation.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={30}
-        progressLabel={t('onboarding.progress', { percent: '30' })}
-      >
+        progress={30}      >
         {OCCUPATIONS.map((occ) => (
           <OptionCard
             key={occ.key}
@@ -169,6 +155,7 @@ export default function OccupationScreen() {
           visible={userOccupation === 'other'}
           value={userOtherText}
           onChangeText={setUserOtherText}
+          label={t('onboarding.occupation.otherLabel')}
           placeholder={t('onboarding.occupation.otherPlaceholder')}
         />
       </QuestionScreen>
@@ -183,13 +170,10 @@ export default function OccupationScreen() {
         chapter={t('onboarding.location.chapter')}
         title={t('onboarding.occupation.partnerTitle', { name: partnerName })}
         helper={t('onboarding.occupation.partnerHelper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={40}
-        progressLabel={t('onboarding.progress', { percent: '40' })}
-      >
+        progress={40}      >
         {OCCUPATIONS.map((occ) => (
           <OptionCard
             key={occ.key}
@@ -208,6 +192,7 @@ export default function OccupationScreen() {
           visible={partnerOccupation === 'other'}
           value={partnerOtherText}
           onChangeText={setPartnerOtherText}
+          label={t('onboarding.occupation.otherLabel')}
           placeholder={t('onboarding.occupation.otherPlaceholder')}
         />
       </QuestionScreen>

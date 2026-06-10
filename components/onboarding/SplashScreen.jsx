@@ -1,65 +1,37 @@
-import { useState, useRef, useEffect } from 'react';
-import { View, Pressable, Animated, Easing } from 'react-native';
+import { useRef, useEffect } from 'react';
+import { View, Animated, Easing } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useOnboardingLayout } from '../../lib/onboardingLayout';
 import { Text } from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
-import { useI18n } from '../../lib/i18n';
 import { C, R, T, S } from '../../constants/onboarding-theme';
+import PrimaryButton from '../ui/PrimaryButton';
 import FadeUpView from './FadeUpView';
-import Svg, { Path } from 'react-native-svg';
-
-/**
- * Arrow-left icon using react-native-svg.
- */
-function ArrowLeftIcon({ color = '#6B7A99', size = 16 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M19 12H5m7-7l-7 7 7 7"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
+import OnboardingNavBackButton from './OnboardingNavBackButton';
 
 /**
  * Full-screen section intro splash screen.
- * Standardised layout: eyebrow → heading (serif) → body → SVG (optional) → bottom bar.
- * Updated to match UI Examples design.
+ * Nav bar, progress bar, heading, and continue CTA.
  *
  * @param {Object} props
- * @param {React.ReactNode} [props.children] - Inline SVG illustration (optional)
- * @param {string} [props.eyebrow] - Small uppercase accent label above heading
  * @param {string} props.heading - Main heading (1–2 lines)
- * @param {string} [props.body] - Supporting body text (optional)
  * @param {string} props.cta - CTA button label
  * @param {Function} props.onContinue - Continue handler
  * @param {string} [props.chapter] - Chapter label shown in nav bar (optional)
  * @param {Function} [props.onBack] - Back button handler (shows back button if provided)
  * @param {number} [props.progress] - Progress 0–100 for the progress bar
- * @param {string} [props.progressLabel] - Label shown next to progress bar
  */
 export default function SplashScreen({
-  children,
-  eyebrow,
   heading,
-  body,
   cta,
   onContinue,
   chapter,
   onBack,
   progress,
-  progressLabel,
 }) {
-  const { t } = useI18n();
   const router = useRouter();
-  const [backHovered, setBackHovered] = useState(false);
-  const [backPressed, setBackPressed] = useState(false);
-  const [continueHovered, setContinueHovered] = useState(false);
-  const [continuePressed, setContinuePressed] = useState(false);
-
+  const insets = useSafeAreaInsets();
+  const layout = useOnboardingLayout();
   const fillAnim = useRef(new Animated.Value(progress !== undefined ? progress : 0)).current;
   const hasProgress = progress !== undefined;
 
@@ -92,35 +64,9 @@ export default function SplashScreen({
       }}>
         {/* Back arrow — top left (only shown when onBack is provided) */}
         {onBack ? (
-          <Pressable
-            onPress={handleBack}
-            onPressIn={() => setBackPressed(true)}
-            onPressOut={() => setBackPressed(false)}
-            onHoverIn={() => setBackHovered(true)}
-            onHoverOut={() => setBackHovered(false)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingLeft: 12,
-              paddingRight: 16,
-              height: S.navHeight,
-              backgroundColor: backHovered
-                ? C.overlayHover
-                : backPressed
-                  ? C.overlayPressed
-                  : 'transparent',
-            }}
-          >
-            <ArrowLeftIcon color={C.muted} size={16} />
-            <Text style={{
-              ...T.backBtn,
-              marginLeft: 4,
-            }}>
-              {t('common.back')}
-            </Text>
-          </Pressable>
+          <OnboardingNavBackButton onPress={handleBack} cooldown={false} />
         ) : (
-          <View style={{ width: 16 }} />
+          <View style={{ width: 100 }} />
         )}
 
         {/* Chapter title — centered */}
@@ -134,7 +80,6 @@ export default function SplashScreen({
           {chapter ? (
             <Text style={{
               ...T.chapterLabel,
-              textTransform: 'uppercase',
             }}>
               {chapter}
             </Text>
@@ -142,12 +87,15 @@ export default function SplashScreen({
         </View>
 
         {/* Right spacer */}
-        <View style={{ width: 80 }} />
+        <View style={{ width: 100 }} />
       </View>
 
       {/* ── Progress bar (thin line under nav bar) ── */}
       {hasProgress ? (
-        <View style={{
+        <View
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(progress) }}
+          style={{
           height: S.progressHeight,
           backgroundColor: C.progressTrack,
         }}>
@@ -163,51 +111,20 @@ export default function SplashScreen({
       ) : null}
 
       {/* ── Centered content ── */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: S.pagePadH }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: layout.pagePadH }}>
         <View style={{
           width: '100%',
           maxWidth: S.maxWidth,
         }}>
-          <FadeUpView duration={350} translateY={18} style={{ width: '100%' }}>
-            {/* Eyebrow */}
-            {eyebrow ? (
-              <Text style={{
-                ...T.eyebrow,
-                textTransform: 'uppercase',
-                textAlign: 'left',
-                marginBottom: 14,
-              }}>
-                {eyebrow}
-              </Text>
-            ) : null}
-
-            {/* Heading */}
-            <Text style={{
+          <FadeUpView duration={320} translateY={10} style={{ width: '100%' }}>
+            <Text
+              accessibilityRole="header"
+              style={{
               ...T.splashHeading,
               textAlign: 'left',
-              marginBottom: body ? 12 : 32,
             }}>
               {heading}
             </Text>
-
-            {/* Body */}
-            {body ? (
-              <Text style={{
-                ...T.splashBody,
-                textAlign: 'left',
-                marginBottom: 32,
-                paddingHorizontal: 0,
-              }}>
-                {body}
-              </Text>
-            ) : null}
-
-            {/* Illustration */}
-            {children ? (
-              <View style={{ marginBottom: 32, alignItems: 'center' }}>
-                {children}
-              </View>
-            ) : null}
           </FadeUpView>
         </View>
       </View>
@@ -217,38 +134,18 @@ export default function SplashScreen({
         backgroundColor: C.surface,
         borderTopWidth: 1,
         borderTopColor: C.border,
+        paddingBottom: Math.max(insets.bottom, 0),
       }}>
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
-          height: 74,
-          paddingHorizontal: S.pagePadH,
+          minHeight: 74,
+          paddingHorizontal: layout.pagePadH,
           maxWidth: S.maxWidth,
           width: '100%',
           alignSelf: 'center',
         }}>
-          {/* Continue button — full width */}
-          <Pressable
-            onPress={onContinue}
-            onPressIn={() => setContinuePressed(true)}
-            onPressOut={() => setContinuePressed(false)}
-            onHoverIn={() => setContinueHovered(true)}
-            onHoverOut={() => setContinueHovered(false)}
-            style={{
-              flex: 1,
-              paddingVertical: 16,
-              paddingHorizontal: 24,
-              borderRadius: R.button,
-              backgroundColor: continuePressed ? C.accentPressed : C.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: continueHovered ? 0.92 : 1,
-            }}
-          >
-            <Text style={{ ...T.btnPrimary, color: '#FFFFFF' }}>
-              {cta}
-            </Text>
-          </Pressable>
+          <PrimaryButton onPress={onContinue}>{cta}</PrimaryButton>
         </View>
       </View>
 

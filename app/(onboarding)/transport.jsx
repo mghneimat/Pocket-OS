@@ -1,20 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { formatCurrency } from '../../lib/finance';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import PillToggle from '../../components/onboarding/PillToggle';
 import DatePicker from '../../components/onboarding/DatePicker';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
+import AnimatedRow from '../../components/onboarding/AnimatedRow';
 import RemoveButton from '../../components/onboarding/RemoveButton';
 import LabeledInput from '../../components/onboarding/LabeledInput';
 import YesNoToggle from '../../components/onboarding/YesNoToggle';
 import FrequencyPills from '../../components/onboarding/FrequencyPills';
 import AddAnotherButton from '../../components/onboarding/AddAnotherButton';
+import InputGroup from '../../components/onboarding/InputGroup';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
 
 const FUEL_TYPES = ['petrol', 'diesel', 'electric', 'hybrid', 'lpg', 'cng'];
 const FREQUENCIES = ['monthly', 'annual'];
@@ -68,9 +71,11 @@ function getCategoryLabel(t, category) {
 export default function TransportScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   // ── Loaded data ──
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   // Step management
   const [step, setStep] = useState('q7');
@@ -83,7 +88,7 @@ export default function TransportScreen() {
   useEffect(() => {
     (async () => {
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
     })();
   }, []);
 
@@ -123,10 +128,50 @@ export default function TransportScreen() {
   /** Total number of vehicles across all categories */
   const totalVehicles = vehicles.length;
 
+  const persistTransport = async () => {
+    const transportData = {
+      hasVehicle,
+      vehicleCounts: hasVehicle ? vehicleCounts : null,
+      vehicles: hasVehicle ? vehicles.map(v => ({
+        ...v,
+        fuelCost: v.fuelCost ? parseFloat(v.fuelCost) || 0 : null,
+        insurancePremium: v.insurancePremium ? parseFloat(v.insurancePremium) || 0 : null,
+        parkingAmount: v.parkingAmount ? parseFloat(v.parkingAmount) || 0 : null,
+      })) : [],
+      fuelType: hasVehicle && vehicles[0] ? vehicles[0].fuelType : null,
+      fuelCost: hasVehicle && vehicles[0] ? parseFloat(vehicles[0].fuelCost) || 0 : null,
+      hasInsurance: hasVehicle && vehicles[0] ? vehicles[0].hasInsurance : null,
+      insurancePremium: hasVehicle && vehicles[0] && vehicles[0].hasInsurance ? parseFloat(vehicles[0].insurancePremium) || 0 : null,
+      insuranceFrequency: hasVehicle && vehicles[0] && vehicles[0].hasInsurance ? vehicles[0].insuranceFrequency : null,
+      insuranceRenewalDate: hasVehicle && vehicles[0] && vehicles[0].hasInsurance ? vehicles[0].insuranceRenewalDate || null : null,
+      hasParking: hasVehicle && vehicles[0] ? vehicles[0].hasParking : null,
+      parkingAmount: hasVehicle && vehicles[0] && vehicles[0].hasParking ? parseFloat(vehicles[0].parkingAmount) || 0 : null,
+      parkingFrequency: hasVehicle && vehicles[0] && vehicles[0].hasParking ? vehicles[0].parkingFrequency : null,
+      motDate: hasVehicle && vehicles[0] ? vehicles[0].motDate || null : null,
+      hasPlannedMaintenance: hasVehicle && vehicles[0] ? vehicles[0].hasPlannedMaintenance : null,
+      maintenanceItems: hasVehicle && vehicles[0] && vehicles[0].hasPlannedMaintenance ? vehicles[0].maintenanceItems : [],
+      hasPublicTransport,
+      ptAmount: hasPublicTransport ? parseFloat(ptAmount) || 0 : null,
+      ptFrequency: hasPublicTransport ? ptFrequency : null,
+      ptValidUntil: hasPublicTransport ? ptValidUntil || null : null,
+    };
+
+    await completeSection({
+      persist: async () => { await setData('pocketos_transport', transportData); },
+      onboardingPatch: { completed: false, currentStep: 'transport', percentComplete: 70 },
+      nextRoute: '/(onboarding)/splash-health',
+    });
+  };
+
   // ─── Continue handler ─────────────────────────────────────
 
   const handleContinue = async () => {
     setValidationError('');
+
+    if (isEditMode) {
+      await persistTransport();
+      return;
+    }
 
     if (step === 'q7') {
       if (hasVehicle === null) {
@@ -236,43 +281,7 @@ export default function TransportScreen() {
         return;
       }
 
-      // Save all transport data
-      const transportData = {
-        hasVehicle,
-        vehicleCounts: hasVehicle ? vehicleCounts : null,
-        vehicles: hasVehicle ? vehicles.map(v => ({
-          ...v,
-          fuelCost: v.fuelCost ? parseFloat(v.fuelCost) || 0 : null,
-          insurancePremium: v.insurancePremium ? parseFloat(v.insurancePremium) || 0 : null,
-          parkingAmount: v.parkingAmount ? parseFloat(v.parkingAmount) || 0 : null,
-        })) : [],
-        // Also keep flat fields for backward compatibility (primary vehicle)
-        fuelType: hasVehicle && vehicles[0] ? vehicles[0].fuelType : null,
-        fuelCost: hasVehicle && vehicles[0] ? parseFloat(vehicles[0].fuelCost) || 0 : null,
-        hasInsurance: hasVehicle && vehicles[0] ? vehicles[0].hasInsurance : null,
-        insurancePremium: hasVehicle && vehicles[0] && vehicles[0].hasInsurance ? parseFloat(vehicles[0].insurancePremium) || 0 : null,
-        insuranceFrequency: hasVehicle && vehicles[0] && vehicles[0].hasInsurance ? vehicles[0].insuranceFrequency : null,
-        insuranceRenewalDate: hasVehicle && vehicles[0] && vehicles[0].hasInsurance ? vehicles[0].insuranceRenewalDate || null : null,
-        hasParking: hasVehicle && vehicles[0] ? vehicles[0].hasParking : null,
-        parkingAmount: hasVehicle && vehicles[0] && vehicles[0].hasParking ? parseFloat(vehicles[0].parkingAmount) || 0 : null,
-        parkingFrequency: hasVehicle && vehicles[0] && vehicles[0].hasParking ? vehicles[0].parkingFrequency : null,
-        motDate: hasVehicle && vehicles[0] ? vehicles[0].motDate || null : null,
-        hasPlannedMaintenance: hasVehicle && vehicles[0] ? vehicles[0].hasPlannedMaintenance : null,
-        maintenanceItems: hasVehicle && vehicles[0] && vehicles[0].hasPlannedMaintenance ? vehicles[0].maintenanceItems : [],
-        hasPublicTransport,
-        ptAmount: hasPublicTransport ? parseFloat(ptAmount) || 0 : null,
-        ptFrequency: hasPublicTransport ? ptFrequency : null,
-        ptValidUntil: hasPublicTransport ? ptValidUntil || null : null,
-      };
-
-      await setData('pocketos_transport', transportData);
-      await setData('pocketos_onboarding', {
-        completed: false,
-        currentStep: 'transport',
-        percentComplete: 70,
-      });
-
-      router.replace('/(onboarding)/splash-health');
+      await persistTransport();
       return;
     }
   };
@@ -283,8 +292,7 @@ export default function TransportScreen() {
     setValidationError('');
 
     if (step === 'q7') {
-      // On the first question — navigate back to the transport splash screen
-      router.replace('/(onboarding)/splash-transport');
+      leaveSection(() => router.replace('/(onboarding)/splash-transport'));
       return;
     }
 
@@ -333,7 +341,7 @@ export default function TransportScreen() {
   // ─── Progress ─────────────────────────────────────────────
 
   const progress = 70;
-  const progressLabel = t('onboarding.progress', { percent: progress });
+  const screenProgress = isEditMode ? undefined : progress;
 
   // ─── Vehicle sub-header ───────────────────────────────────
 
@@ -471,15 +479,17 @@ export default function TransportScreen() {
             />
           ))}
         </View>
-        <LabeledInput
-          label={v.fuelType === 'electric' ? t('onboarding.transport.q7a.costLabelElectric') : t('onboarding.transport.q7a.costLabel')}
-          value={v.fuelCost}
-          onChangeText={(val) => updateVehicle('fuelCost', val)}
-          numeric
-          placeholder={t('onboarding.transport.q7a.costPlaceholder')}
-          large
-          currency={currency}
-        />
+        <InputGroup label={v.fuelType === 'electric' ? t('onboarding.transport.q7a.costLabelElectric') : t('onboarding.transport.q7a.costLabel')}>
+          <LabeledInput
+            value={v.fuelCost}
+            onChangeText={(val) => updateVehicle('fuelCost', val)}
+            numeric
+            placeholder={t('onboarding.transport.q7a.costPlaceholder')}
+            large
+            inGroup
+            currency={currency}
+          />
+        </InputGroup>
       </View>
     );
   };
@@ -503,21 +513,23 @@ export default function TransportScreen() {
           noLabel={t('common.no')}
         />
         <AnimatedSlideIn visible={v.hasInsurance === true}>
-          <LabeledInput
-            label={t('onboarding.transport.q7b.premiumLabel')}
-            value={v.insurancePremium}
-            onChangeText={(val) => updateVehicle('insurancePremium', val)}
-            numeric
-            placeholder={t('onboarding.transport.q7b.premiumPlaceholder')}
-            large
-            currency={currency}
-          />
-          <FrequencyPills
-            options={FREQUENCIES}
-            value={v.insuranceFrequency}
-            onChange={(val) => updateVehicle('insuranceFrequency', val)}
-            small
-          />
+          <InputGroup label={t('onboarding.transport.q7b.premiumLabel')}>
+            <LabeledInput
+              value={v.insurancePremium}
+              onChangeText={(val) => updateVehicle('insurancePremium', val)}
+              numeric
+              placeholder={t('onboarding.transport.q7b.premiumPlaceholder')}
+              large
+              inGroup
+              currency={currency}
+            />
+            <FrequencyPills
+              options={FREQUENCIES}
+              value={v.insuranceFrequency}
+              onChange={(val) => updateVehicle('insuranceFrequency', val)}
+              small
+            />
+          </InputGroup>
           {/* Renewal date */}
           <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 6, marginTop: 12 }}>
             {t('onboarding.transport.q7b.renewalLabel')}
@@ -550,21 +562,23 @@ export default function TransportScreen() {
           noLabel={t('common.no')}
         />
         <AnimatedSlideIn visible={v.hasParking === true}>
-          <LabeledInput
-            label={t('onboarding.transport.q7c.amountLabel')}
-            value={v.parkingAmount}
-            onChangeText={(val) => updateVehicle('parkingAmount', val)}
-            numeric
-            placeholder={t('onboarding.transport.q7c.amountPlaceholder')}
-            large
-            currency={currency}
-          />
-          <FrequencyPills
-            options={FREQUENCIES}
-            value={v.parkingFrequency}
-            onChange={(val) => updateVehicle('parkingFrequency', val)}
-            small
-          />
+          <InputGroup label={t('onboarding.transport.q7c.amountLabel')}>
+            <LabeledInput
+              value={v.parkingAmount}
+              onChangeText={(val) => updateVehicle('parkingAmount', val)}
+              numeric
+              placeholder={t('onboarding.transport.q7c.amountPlaceholder')}
+              large
+              inGroup
+              currency={currency}
+            />
+            <FrequencyPills
+              options={FREQUENCIES}
+              value={v.parkingFrequency}
+              onChange={(val) => updateVehicle('parkingFrequency', val)}
+              small
+            />
+          </InputGroup>
         </AnimatedSlideIn>
       </View>
     );
@@ -596,8 +610,8 @@ export default function TransportScreen() {
           />
           <AnimatedSlideIn visible={v.hasPlannedMaintenance === true}>
             {v.maintenanceItems.map((item, idx) => (
-              <View key={idx} style={{ padding: S.cardPad, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
-                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+              <AnimatedRow key={idx} visible>
+                <View style={{ padding: S.cardPad, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
                   <LabeledInput
                     label={t('onboarding.transport.q7bicycle.maintenanceDescPlaceholder')}
                     value={item.description}
@@ -608,45 +622,45 @@ export default function TransportScreen() {
                     }}
                     placeholder={t('onboarding.transport.q7bicycle.maintenanceDescPlaceholder')}
                     inCard
-                    containerStyle={{ flex: 1, marginBottom: 0 }}
+                    containerStyle={{ marginBottom: 10 }}
                   />
-                  <LabeledInput
-                    label={t('onboarding.transport.q7bicycle.maintenanceCostPlaceholder')}
-                    value={item.cost}
-                    onChangeText={(val) => {
-                      const items = [...v.maintenanceItems];
-                      items[idx] = { ...items[idx], cost: val };
-                      updateVehicle('maintenanceItems', items);
-                    }}
-                    numeric
-                    placeholder={t('onboarding.transport.q7bicycle.maintenanceCostPlaceholder')}
-                    large
-                    containerStyle={{ width: 130, marginBottom: 0 }}
-                    currency={currency}
-                  />
-                  {v.maintenanceItems.length > 1 && (
-                    <View style={{ height: 63, justifyContent: 'center' }}>
+                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end', marginBottom: 8 }}>
+                    <LabeledInput
+                      label={t('onboarding.transport.q7bicycle.maintenanceCostLabel')}
+                      value={item.cost}
+                      onChangeText={(val) => {
+                        const items = [...v.maintenanceItems];
+                        items[idx] = { ...items[idx], cost: val };
+                        updateVehicle('maintenanceItems', items);
+                      }}
+                      numeric
+                      placeholder={t('onboarding.transport.q7bicycle.maintenanceCostPlaceholder')}
+                      inCard
+                      currency={currency}
+                      containerStyle={{ flex: 1, marginBottom: 0 }}
+                    />
+                    {v.maintenanceItems.length > 1 ? (
                       <RemoveButton
                         onPress={() => {
                           const items = v.maintenanceItems.filter((_, i) => i !== idx);
                           updateVehicle('maintenanceItems', items);
                         }}
                       />
-                    </View>
-                  )}
+                    ) : null}
+                  </View>
+                  <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 6 }}>
+                    {t('onboarding.transport.q7bicycle.maintenanceDateLabel')}
+                  </Text>
+                  <DatePicker
+                    value={item.date}
+                    onChange={(val) => {
+                      const items = [...v.maintenanceItems];
+                      items[idx] = { ...items[idx], date: val };
+                      updateVehicle('maintenanceItems', items);
+                    }}
+                  />
                 </View>
-                <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 6 }}>
-                  {t('onboarding.transport.q7bicycle.maintenanceDateLabel')}
-                </Text>
-                <DatePicker
-                  value={item.date}
-                  onChange={(val) => {
-                    const items = [...v.maintenanceItems];
-                    items[idx] = { ...items[idx], date: val };
-                    updateVehicle('maintenanceItems', items);
-                  }}
-                />
-              </View>
+              </AnimatedRow>
             ))}
             <AddAnotherButton
               label={t('onboarding.transport.q7bicycle.addItem')}
@@ -689,8 +703,8 @@ export default function TransportScreen() {
         />
         <AnimatedSlideIn visible={v.hasPlannedMaintenance === true}>
           {v.maintenanceItems.map((item, idx) => (
-            <View key={idx} style={{ padding: S.cardPad, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+            <AnimatedRow key={idx} visible>
+              <View style={{ padding: S.cardPad, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
                 <LabeledInput
                   label={t('onboarding.transport.q7d.maintenanceDescPlaceholder')}
                   value={item.description}
@@ -701,45 +715,45 @@ export default function TransportScreen() {
                   }}
                   placeholder={t('onboarding.transport.q7d.maintenanceDescPlaceholder')}
                   inCard
-                  containerStyle={{ flex: 1 }}
+                  containerStyle={{ marginBottom: 10 }}
                 />
-                <LabeledInput
-                  label={t('onboarding.transport.q7d.maintenanceCostPlaceholder')}
-                  value={item.cost}
-                  onChangeText={(val) => {
-                    const items = [...v.maintenanceItems];
-                    items[idx] = { ...items[idx], cost: val };
-                    updateVehicle('maintenanceItems', items);
-                  }}
-                  numeric
-                  placeholder={t('onboarding.transport.q7d.maintenanceCostPlaceholder')}
-                  large
-                  containerStyle={{ width: 130 }}
-                  currency={currency}
-                />
-                {v.maintenanceItems.length > 1 && (
-                  <View style={{ height: 63, justifyContent: 'center' }}>
+                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end', marginBottom: 8 }}>
+                  <LabeledInput
+                    label={t('onboarding.transport.q7d.maintenanceCostLabel')}
+                    value={item.cost}
+                    onChangeText={(val) => {
+                      const items = [...v.maintenanceItems];
+                      items[idx] = { ...items[idx], cost: val };
+                      updateVehicle('maintenanceItems', items);
+                    }}
+                    numeric
+                    placeholder={t('onboarding.transport.q7d.maintenanceCostPlaceholder')}
+                    inCard
+                    currency={currency}
+                    containerStyle={{ flex: 1, marginBottom: 0 }}
+                  />
+                  {v.maintenanceItems.length > 1 ? (
                     <RemoveButton
                       onPress={() => {
                         const items = v.maintenanceItems.filter((_, i) => i !== idx);
                         updateVehicle('maintenanceItems', items);
                       }}
                     />
-                  </View>
-                )}
+                  ) : null}
+                </View>
+                <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 6 }}>
+                  {t('onboarding.transport.q7d.maintenanceDateLabel')}
+                </Text>
+                <DatePicker
+                  value={item.date}
+                  onChange={(val) => {
+                    const items = [...v.maintenanceItems];
+                    items[idx] = { ...items[idx], date: val };
+                    updateVehicle('maintenanceItems', items);
+                  }}
+                />
               </View>
-              <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 6 }}>
-                {t('onboarding.transport.q7d.maintenanceDateLabel')}
-              </Text>
-              <DatePicker
-                value={item.date}
-                onChange={(val) => {
-                  const items = [...v.maintenanceItems];
-                  items[idx] = { ...items[idx], date: val };
-                  updateVehicle('maintenanceItems', items);
-                }}
-              />
-            </View>
+            </AnimatedRow>
           ))}
           <AddAnotherButton
             label={t('onboarding.transport.q7d.addItem')}
@@ -766,22 +780,23 @@ export default function TransportScreen() {
         containerStyle={{ marginBottom: 20 }}
       />
       <AnimatedSlideIn visible={hasPublicTransport === true}>
-        <LabeledInput
-          label={t('onboarding.transport.q7e.amountLabel')}
-          value={ptAmount}
-          onChangeText={setPtAmount}
-          numeric
-          placeholder={t('onboarding.transport.q7e.amountPlaceholder')}
-          large
-          currency={currency}
-        />
-        <FrequencyPills
-          options={['daily', 'weekly', 'monthly', 'annual']}
-          value={ptFrequency}
-          onChange={setPtFrequency}
-          small
-          containerStyle={{ marginBottom: 12 }}
-        />
+        <InputGroup label={t('onboarding.transport.q7e.amountLabel')}>
+          <LabeledInput
+            value={ptAmount}
+            onChangeText={setPtAmount}
+            numeric
+            placeholder={t('onboarding.transport.q7e.amountPlaceholder')}
+            large
+            inGroup
+            currency={currency}
+          />
+          <FrequencyPills
+            options={['daily', 'weekly', 'monthly', 'annual']}
+            value={ptFrequency}
+            onChange={setPtFrequency}
+            small
+          />
+        </InputGroup>
         {/* Pass valid until */}
         <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 6 }}>
           {t('onboarding.transport.q7e.validUntilLabel')}
@@ -812,12 +827,11 @@ export default function TransportScreen() {
     <QuestionScreen
       chapter={t('onboarding.transport.chapter')}
       title={stepTitles[step]}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
       onBack={handleBack}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
       animationKey={step}
     >
       {step === 'q7' && renderQ7()}

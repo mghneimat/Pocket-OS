@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable, Animated } from 'react-native';
+import { View, Text, Pressable, Animated, Easing } from 'react-native';
+import { useOnboardingLayout } from '../../lib/onboardingLayout';
+import { useReducedMotion } from '../../lib/useReducedMotion';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
-import { toMonthly, formatCurrency } from '../../lib/finance';
+import { toMonthly, formatCurrency, committedMonthlyLoad } from '../../lib/finance';
+import { loadHouseholdFinancials } from '../../lib/householdBudget';
+import { snapshotCommittedBaseline } from '../../lib/costReductionProgress';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 
 /** Maps children-costs field keys to i18n keys under onboarding.childrenCosts.q9.field */
@@ -27,47 +30,84 @@ const FIELD_I18N_MAP = {
 
 /** Collapsible review section */
 function ReviewSection({ icon, title, children, defaultOpen = true }) {
+  const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(defaultOpen);
   const anim = useRef(new Animated.Value(defaultOpen ? 1 : 0)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      anim.setValue(open ? 1 : 0);
+      return;
+    }
     Animated.timing(anim, {
       toValue: open ? 1 : 0,
       duration: 280,
-      easing: require('react-native').Easing.bezier(0.16, 1, 0.3, 1),
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
       useNativeDriver: false,
     }).start();
-  }, [open]);
+  }, [open, reduceMotion]);
+
+  const body = (
+    <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      {children}
+    </View>
+  );
 
   return (
     <View style={{ marginBottom: 12, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, overflow: 'hidden' }}>
       <Pressable
         onPress={() => setOpen(!open)}
-        style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={title}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 16,
+          minHeight: 44,
+          backgroundColor: pressed ? C.overlayHover : 'transparent',
+        })}
       >
         <Text style={{ fontSize: 18, marginRight: 10 }}>{icon}</Text>
-        <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.primary }}>{title}</Text>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: C.primary }} numberOfLines={2}>{title}</Text>
         <Text style={{ fontSize: 14, color: C.muted }}>{open ? '▲' : '▼'}</Text>
       </Pressable>
-      <Animated.View style={{
-        maxHeight: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1000] }),
-        opacity: anim,
-        overflow: 'hidden',
-      }}>
-        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-          {children}
-        </View>
-      </Animated.View>
+      {reduceMotion ? (
+        open ? body : null
+      ) : (
+        <Animated.View style={{
+          maxHeight: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1000] }),
+          opacity: anim,
+          overflow: 'hidden',
+        }}>
+          {body}
+        </Animated.View>
+      )}
     </View>
   );
 }
 
 /** A single data row */
 function DataRow({ label, value }) {
+  const layout = useOnboardingLayout();
+
+  if (layout.isNarrow) {
+    return (
+      <View style={{ paddingVertical: 8 }}>
+        <Text style={{ ...T.caption, color: C.muted }} numberOfLines={3}>{label}</Text>
+        <Text style={{ ...T.caption, color: C.text, fontWeight: '500', marginTop: 2 }} numberOfLines={2}>
+          {value || '—'}
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-      <Text style={{ ...T.caption, color: C.muted, flex: 1 }}>{label}</Text>
-      <Text style={{ ...T.caption, color: C.text, fontWeight: '500', textAlign: 'right' }}>{value || '—'}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 12 }}>
+      <Text style={{ ...T.caption, color: C.muted, flex: 1, minWidth: 0 }} numberOfLines={2}>{label}</Text>
+      <Text style={{ ...T.caption, color: C.text, fontWeight: '500', textAlign: 'right', flexShrink: 0, maxWidth: '50%' }} numberOfLines={2}>
+        {value || '—'}
+      </Text>
     </View>
   );
 }
@@ -102,6 +142,9 @@ export default function ReviewScreen() {
   }, []);
 
   const handleComplete = async () => {
+    const financials = await loadHouseholdFinancials(t);
+    await snapshotCommittedBaseline(committedMonthlyLoad(financials));
+
     await setData('pocketos_onboarding', {
       completed: true,
       currentStep: 'review',
@@ -136,8 +179,12 @@ export default function ReviewScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 15, color: C.muted }}>{t('common.loading')}</Text>
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel={t('common.loading')}
+        style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Text style={{ ...T.helper }}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -147,7 +194,6 @@ export default function ReviewScreen() {
       chapter={t('onboarding.review.chapter')}
       title={t('onboarding.review.q15.title')}
       helper={t('onboarding.review.q15.helper')}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleComplete}
       onBack={handleBack}
       continueDisabled={false}
@@ -305,12 +351,41 @@ export default function ReviewScreen() {
         <ReviewSection icon="📊" title={t('onboarding.review.q15.sections.budget')}>
           <DataRow label={t('onboarding.review.q15.labels.monthlyBudget')} value={budget?.monthlyFlexible ? formatCurrency(budget.monthlyFlexible, 'CZK') + '/mo' : '—'} />
           <DataRow label={t('onboarding.review.q15.labels.rollover')} value={budget?.rolloverStrategy ? t(`onboarding.budget.q14a.${budget.rolloverStrategy}`) : '—'} />
-          {budget?.rolloverMultiplier ? <DataRow label={t('onboarding.review.q15.labels.multiplier')} value={`×${budget.rolloverMultiplier}`} /> : null}
+          {budget?.rolloverStrategy === 'capped' && budget?.rolloverCapType === 'multiplier' && budget?.rolloverMultiplier ? (
+            <DataRow label={t('onboarding.review.q15.labels.multiplier')} value={`×${budget.rolloverMultiplier}`} />
+          ) : null}
+          {budget?.rolloverStrategy === 'capped' && budget?.rolloverCapType === 'amount' && budget?.rolloverCapAmount ? (
+            <DataRow label={t('onboarding.review.q15.labels.rolloverCap')} value={formatCurrency(budget.rolloverCapAmount, 'CZK')} />
+          ) : null}
+          {budget?.rolloverStrategy === 'reset' && budget?.resetUnspentDestination ? (
+            <DataRow
+              label={t('onboarding.review.q15.labels.resetDestination')}
+              value={
+                budget.resetUnspentDestination === 'otherGoal'
+                  ? (budget.resetOtherGoalNote || t('onboarding.budget.q14a.resetToOtherGoal'))
+                  : budget.resetUnspentDestination === 'savings'
+                    ? t('onboarding.budget.q14a.resetToSavings')
+                    : t('onboarding.budget.q14a.resetLooseMoney')
+              }
+            />
+          ) : null}
         </ReviewSection>
       </View>
 
       {/* Secondary: I'll finish this later */}
-      <Pressable onPress={handleLater} style={{ marginTop: 12, paddingVertical: 10, alignItems: 'center' }}>
+      <Pressable
+        onPress={handleLater}
+        accessibilityRole="button"
+        accessibilityLabel={t('onboarding.review.q15.skip')}
+        style={({ pressed }) => ({
+          marginTop: 12,
+          minHeight: 44,
+          paddingVertical: 10,
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
         <Text style={{ ...T.btnSkip, color: C.muted }}>{t('onboarding.review.q15.skip')}</Text>
       </Pressable>
     </QuestionScreen>

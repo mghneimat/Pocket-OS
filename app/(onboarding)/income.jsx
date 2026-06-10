@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { toMonthly, formatCurrency } from '../../lib/finance';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
+import OptionCard from '../../components/onboarding/OptionCard';
 import PillToggle from '../../components/onboarding/PillToggle';
 import DatePicker from '../../components/onboarding/DatePicker';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
@@ -16,6 +17,21 @@ import LabeledInput from '../../components/onboarding/LabeledInput';
 import YesNoToggle from '../../components/onboarding/YesNoToggle';
 import FrequencyPills from '../../components/onboarding/FrequencyPills';
 import AddAnotherButton from '../../components/onboarding/AddAnotherButton';
+import InputGroup from '../../components/onboarding/InputGroup';
+import ScrollFocusAnchor from '../../components/onboarding/ScrollFocusAnchor';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
+import {
+  getIncomeBackTarget,
+  hasPriorSalaryIncome,
+  resolveInitialIncomeStep,
+  validateOtherIncomeContinue,
+} from '../../lib/incomeFlow';
+import {
+  GOAL_TYPES,
+  SAVE_MODES,
+  buildIncomeGoalPayload,
+  restoreGoalSelection,
+} from '../../lib/incomeGoals';
 
 const FREQUENCIES = ['daily', 'weekly', 'fortnightly', 'monthly'];
 
@@ -29,15 +45,17 @@ const FREQUENCIES = ['daily', 'weekly', 'fortnightly', 'monthly'];
 export default function IncomeScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   // ── Loaded data ──
   const [occupation, setOccupation] = useState(null);
   const [hasPartner, setHasPartner] = useState(false);
   const [partnerName, setPartnerName] = useState('');
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   // ── Step tracking ──
-  const [step, setStep] = useState('q5'); // q5 | q5a | q5b | q5c | q5d
+  const [step, setStep] = useState('q5'); // q5 | q5a | q5b | q5c | q5d | q5d-mode | q5d-details
 
   // ── Q5: Your income ──
   const [incomeAmount, setIncomeAmount] = useState('');
@@ -53,13 +71,15 @@ export default function IncomeScreen() {
     { id: 0, amount: '', frequency: 'monthly', label: '', visible: true },
   ]);
   const nextRowId = useRef(1);
+  const [focusToken, setFocusToken] = useState(null);
 
   // ── Q5c: Savings ──
   const [savingsBalance, setSavingsBalance] = useState('');
   const [savingsMonthlyTarget, setSavingsMonthlyTarget] = useState('');
 
   // ── Q5d: Financial goal ──
-  const [hasGoal, setHasGoal] = useState(null); // null | true | false
+  const [goalType, setGoalType] = useState(null); // reduceCosts | saveMoney | reduceAndSave
+  const [saveMode, setSaveMode] = useState(null); // target | ongoing
   const [goalDescription, setGoalDescription] = useState('');
   const [goalAmount, setGoalAmount] = useState('');
   const [goalDate, setGoalDate] = useState('');
@@ -73,10 +93,11 @@ export default function IncomeScreen() {
       if (occ) setOccupation(occ);
 
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
 
       const household = await getData('pocketos_household');
-      if (household?.type === 'partner' && household?.partnerName) {
+      const partnerHousehold = household?.type === 'partner' && household?.partnerName;
+      if (partnerHousehold) {
         setHasPartner(true);
         setPartnerName(household.partnerName);
       }
@@ -102,14 +123,23 @@ export default function IncomeScreen() {
         }
         if (saved.savingsBalance) setSavingsBalance(String(saved.savingsBalance));
         if (saved.savingsMonthlyTarget) setSavingsMonthlyTarget(String(saved.savingsMonthlyTarget));
-        if (saved.hasGoal !== undefined) setHasGoal(saved.hasGoal);
+        const restoredGoal = restoreGoalSelection(saved);
+        if (restoredGoal.goalType) setGoalType(restoredGoal.goalType);
+        if (restoredGoal.saveMode) setSaveMode(restoredGoal.saveMode);
         if (saved.goalDescription) setGoalDescription(saved.goalDescription);
         if (saved.goalAmount) setGoalAmount(String(saved.goalAmount));
         if (saved.goalDate) setGoalDate(saved.goalDate);
       }
+
+      setStep(resolveInitialIncomeStep({
+        isEditMode,
+        hasPartner: Boolean(partnerHousehold),
+        userOccupation: occ?.user,
+        partnerOccupation: occ?.partner,
+      }));
     }
     loadData();
-  }, []);
+  }, [isEditMode]);
 
   const occupationKey = occupation?.user || 'other';
   const isNotWorking = occupationKey === 'notWorking';
@@ -146,6 +176,11 @@ export default function IncomeScreen() {
   const handleContinue = async () => {
     setValidationError('');
 
+    if (isEditMode) {
+      await saveAll();
+      return;
+    }
+
     if (step === 'q5') {
       if (!isNotWorking && !incomeAmount) {
         setValidationError(t('onboarding.income.q5.validation'));
@@ -163,12 +198,56 @@ export default function IncomeScreen() {
       }
       setStep('q5b');
     } else if (step === 'q5b') {
+      const priorSalary = hasPriorSalaryIncome({
+        isNotWorking,
+        incomeAmount,
+        hasPartner,
+        partnerIsNotWorking,
+        partnerIncomeAmount,
+      });
+      const validationKey = validateOtherIncomeContinue({
+        hasPriorSalary: priorSalary,
+        hasOtherIncome,
+        otherIncomeRows,
+      });
+      if (validationKey) {
+        const messageKey = validationKey === 'validationNoIncome' && !hasPartner
+          ? 'onboarding.income.q5b.validationNoIncomeSolo'
+          : `onboarding.income.q5b.${validationKey}`;
+        setValidationError(t(messageKey, { name: partnerName }));
+        return;
+      }
       setStep('q5c');
     } else if (step === 'q5c') {
       setStep('q5d');
     } else if (step === 'q5d') {
-      if (hasGoal === true && !goalAmount) {
-        setValidationError(t('onboarding.income.q5d.validation'));
+      if (!goalType) {
+        setValidationError(t('onboarding.income.q5d.validationType'));
+        return;
+      }
+      if (goalType === GOAL_TYPES.REDUCE_COSTS) {
+        await saveAll();
+        return;
+      }
+      setStep('q5d-mode');
+    } else if (step === 'q5d-mode') {
+      if (!saveMode) {
+        setValidationError(t('onboarding.income.q5d.validationSaveMode'));
+        return;
+      }
+      setStep('q5d-details');
+    } else if (step === 'q5d-details') {
+      if (saveMode === SAVE_MODES.TARGET) {
+        if (!goalAmount) {
+          setValidationError(t('onboarding.income.q5d.validationTargetAmount'));
+          return;
+        }
+        if (!goalDate) {
+          setValidationError(t('onboarding.income.q5d.validationTargetDate'));
+          return;
+        }
+      } else if (!savingsMonthlyTarget) {
+        setValidationError(t('onboarding.income.q5d.validationOngoingAmount'));
         return;
       }
       await saveAll();
@@ -187,42 +266,61 @@ export default function IncomeScreen() {
         frequency: r.frequency,
         label: r.label,
       })) : [],
-      savingsBalance: savingsBalance ? parseFloat(savingsBalance) : null,
-      savingsMonthlyTarget: savingsMonthlyTarget ? parseFloat(savingsMonthlyTarget) : null,
-      hasGoal,
-      goalDescription: hasGoal ? goalDescription : null,
-      goalAmount: hasGoal && goalAmount ? parseFloat(goalAmount) : null,
-      goalDate: hasGoal ? goalDate : null,
+      ...buildIncomeGoalPayload({
+        goalType,
+        saveMode,
+        savingsBalance,
+        savingsMonthlyTarget,
+        goalDescription,
+        goalAmount,
+        goalDate,
+      }),
     };
 
-    await setData('pocketos_income', incomeData);
-
-    await setData('pocketos_onboarding', {
-      completed: false,
-      currentStep: 'income',
-      percentComplete: 55,
+    await completeSection({
+      persist: async () => { await setData('pocketos_income', incomeData); },
+      onboardingPatch: { completed: false, currentStep: 'income', percentComplete: 55 },
+      nextRoute: '/(onboarding)/splash-housing',
     });
-
-    router.replace('/(onboarding)/splash-housing');
   };
 
   const handleBack = () => {
     setValidationError('');
-    if (step === 'q5a') { setStep('q5'); return; }
-    if (step === 'q5b') {
-      if (hasPartner && !partnerIsNotWorking) { setStep('q5a'); return; }
-      setStep('q5');
+    if (step === 'q5c') { setStep('q5b'); return; }
+    if (step === 'q5d-details') { setStep('q5d-mode'); return; }
+    if (step === 'q5d-mode') { setStep('q5d'); return; }
+    if (step === 'q5d') { setStep('q5c'); return; }
+
+    const backTarget = getIncomeBackTarget({
+      step,
+      hasPartner,
+      isNotWorking,
+      partnerIsNotWorking,
+    });
+
+    if (backTarget === 'splash') {
+      leaveSection(() => router.replace('/(onboarding)/splash-income'));
       return;
     }
-    if (step === 'q5c') { setStep('q5b'); return; }
-    if (step === 'q5d') { setStep('q5c'); return; }
-    // On the first question — navigate back to the income splash screen
-    router.replace('/(onboarding)/splash-income');
+    setStep(backTarget);
   };
+
+  const progressMap = {
+    q5: 45,
+    q5a: 48,
+    q5b: 50,
+    q5c: 53,
+    q5d: 54,
+    'q5d-mode': 55,
+    'q5d-details': 56,
+  };
+  const progress = progressMap[step] || 45;
+  const screenProgress = isEditMode ? undefined : progress;
 
   const addOtherRow = () => {
     const id = nextRowId.current++;
     setOtherIncomeRows([...otherIncomeRows, { id, amount: '', frequency: 'monthly', label: '', visible: true }]);
+    setFocusToken(String(id));
   };
 
   const updateOtherRow = (index, field, value) => {
@@ -243,10 +341,6 @@ export default function IncomeScreen() {
     setOtherIncomeRows((prev) => prev.filter(r => r.id !== id));
   };
 
-  // ── Progress calculation ──
-  const progressMap = { q5: 45, q5a: 48, q5b: 50, q5c: 53, q5d: 55 };
-  const progress = progressMap[step] || 45;
-
   // ── Q5: Your income ──
   if (step === 'q5') {
     return (
@@ -257,12 +351,11 @@ export default function IncomeScreen() {
           ? t('onboarding.income.q5.titleNotWorking')
           : t(`onboarding.income.q5.${getTitleKey(occupationKey)}`)}
         helper={t(`onboarding.income.q5.${getHelperKey(occupationKey)}`)}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={progress}
-        progressLabel={t('onboarding.progress', { percent: String(progress) })}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
       >
         {isNotWorking ? (
           <View style={{
@@ -278,27 +371,28 @@ export default function IncomeScreen() {
           </View>
         ) : (
           <>
-            <LabeledInput
-              label={t('onboarding.income.q5.titleEmployee')}
-              value={incomeAmount}
-              onChangeText={setIncomeAmount}
-              numeric
-              placeholder="0"
-              large
-              currency={currency}
-            />
-
-            <FrequencyPills
-              options={FREQUENCIES}
-              value={incomeFrequency}
-              onChange={setIncomeFrequency}
-              labelMap={{
-                daily: t('onboarding.income.q5.frequencyDaily'),
-                weekly: t('onboarding.income.q5.frequencyWeekly'),
-                fortnightly: t('onboarding.income.q5.frequencyFortnightly'),
-                monthly: t('onboarding.income.q5.frequencyMonthly'),
-              }}
-            />
+            <InputGroup label={t(`onboarding.income.q5.${getTitleKey(occupationKey)}`)}>
+              <LabeledInput
+                value={incomeAmount}
+                onChangeText={setIncomeAmount}
+                numeric
+                placeholder="0"
+                large
+                inGroup
+                currency={currency}
+              />
+              <FrequencyPills
+                options={FREQUENCIES}
+                value={incomeFrequency}
+                onChange={setIncomeFrequency}
+                labelMap={{
+                  daily: t('onboarding.income.q5.frequencyDaily'),
+                  weekly: t('onboarding.income.q5.frequencyWeekly'),
+                  fortnightly: t('onboarding.income.q5.frequencyFortnightly'),
+                  monthly: t('onboarding.income.q5.frequencyMonthly'),
+                }}
+              />
+            </InputGroup>
           </>
         )}
       </QuestionScreen>
@@ -313,53 +407,79 @@ export default function IncomeScreen() {
         chapter={t('onboarding.income.chapter')}
         title={t('onboarding.income.q5a.title', { name: partnerName })}
         helper={t('onboarding.income.q5a.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={progress}
-        progressLabel={t('onboarding.progress', { percent: String(progress) })}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
       >
-        <LabeledInput
-          label={t('onboarding.income.q5a.title', { name: partnerName })}
-          value={partnerIncomeAmount}
-          onChangeText={setPartnerIncomeAmount}
-          numeric
-          placeholder="0"
-          large
-          currency={currency}
-        />
-
-        <FrequencyPills
-          options={FREQUENCIES}
-          value={partnerIncomeFrequency}
-          onChange={setPartnerIncomeFrequency}
-          labelMap={{
-            daily: t('onboarding.income.q5.frequencyDaily'),
-            weekly: t('onboarding.income.q5.frequencyWeekly'),
-            fortnightly: t('onboarding.income.q5.frequencyFortnightly'),
-            monthly: t('onboarding.income.q5.frequencyMonthly'),
-          }}
-        />
+        <InputGroup label={t('onboarding.income.q5a.amountLabel')}>
+          <LabeledInput
+            value={partnerIncomeAmount}
+            onChangeText={setPartnerIncomeAmount}
+            numeric
+            placeholder="0"
+            large
+            inGroup
+            currency={currency}
+          />
+          <FrequencyPills
+            options={FREQUENCIES}
+            value={partnerIncomeFrequency}
+            onChange={setPartnerIncomeFrequency}
+            labelMap={{
+              daily: t('onboarding.income.q5.frequencyDaily'),
+              weekly: t('onboarding.income.q5.frequencyWeekly'),
+              fortnightly: t('onboarding.income.q5.frequencyFortnightly'),
+              monthly: t('onboarding.income.q5.frequencyMonthly'),
+            }}
+          />
+        </InputGroup>
       </QuestionScreen>
     );
   }
 
   // ── Q5b: Other income sources ──
   if (step === 'q5b') {
+    const requiresOtherIncome = !hasPriorSalaryIncome({
+      isNotWorking,
+      incomeAmount,
+      hasPartner,
+      partnerIsNotWorking,
+      partnerIncomeAmount,
+    });
+
     return (
       <QuestionScreen
         animationKey={step}
         chapter={t('onboarding.income.chapter')}
         title={t('onboarding.income.q5b.title')}
-        helper={t('onboarding.income.q5b.helper')}
-        illustration={<PlaceholderIllustration />}
+        helper={requiresOtherIncome
+          ? (hasPartner
+            ? t('onboarding.income.q5b.helperRequired')
+            : t('onboarding.income.q5b.helperRequiredSolo'))
+          : t('onboarding.income.q5b.helper')}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={progress}
-        progressLabel={t('onboarding.progress', { percent: String(progress) })}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
       >
+        {requiresOtherIncome ? (
+          <View style={{
+            padding: 16,
+            backgroundColor: C.infoBg,
+            borderRadius: R.input,
+            borderWidth: 1,
+            borderColor: C.infoBorder,
+            marginBottom: 12,
+          }}>
+            <Text style={{ fontSize: 14, color: C.infoText, lineHeight: 22 }}>
+              {t('onboarding.income.q5b.requiredNote')}
+            </Text>
+          </View>
+        ) : null}
+
         <YesNoToggle
           value={hasOtherIncome}
           onChange={setHasOtherIncome}
@@ -369,8 +489,8 @@ export default function IncomeScreen() {
 
         <AnimatedSlideIn visible={hasOtherIncome === true}>
           {otherIncomeRows.map((row, index) => (
+            <ScrollFocusAnchor key={row.id} focusId={String(row.id)} focusToken={focusToken}>
             <AnimatedRow
-              key={row.id}
               visible={row.visible}
               onAnimationEnd={() => {
                 if (!row.visible) finalizeRemove(row.id);
@@ -383,30 +503,32 @@ export default function IncomeScreen() {
                 borderRadius: R.card,
                 padding: S.cardPad,
               }}>
-                <LabeledInput
-                  label={t('onboarding.income.q5b.amountLabel')}
-                  value={row.amount}
-                  onChangeText={(v) => updateOtherRow(index, 'amount', v)}
-                  numeric
-                  placeholder={t('onboarding.income.q5b.amountPlaceholder')}
-                  large
-                  currency={currency}
-                />
-
-                <FrequencyPills
-                  options={FREQUENCIES}
-                  value={row.frequency}
-                  onChange={(freq) => updateOtherRow(index, 'frequency', freq)}
-                  labelMap={{
-                    daily: t('onboarding.income.q5.frequencyDaily'),
-                    weekly: t('onboarding.income.q5.frequencyWeekly'),
-                    fortnightly: t('onboarding.income.q5.frequencyFortnightly'),
-                    monthly: t('onboarding.income.q5.frequencyMonthly'),
-                  }}
-                />
+                <InputGroup nested>
+                  <LabeledInput
+                    label={t('onboarding.income.q5b.amountLabel')}
+                    value={row.amount}
+                    onChangeText={(v) => updateOtherRow(index, 'amount', v)}
+                    numeric
+                    placeholder={t('onboarding.income.q5b.amountPlaceholder')}
+                    large
+                    inGroup
+                    currency={currency}
+                  />
+                  <FrequencyPills
+                    options={FREQUENCIES}
+                    value={row.frequency}
+                    onChange={(freq) => updateOtherRow(index, 'frequency', freq)}
+                    labelMap={{
+                      daily: t('onboarding.income.q5.frequencyDaily'),
+                      weekly: t('onboarding.income.q5.frequencyWeekly'),
+                      fortnightly: t('onboarding.income.q5.frequencyFortnightly'),
+                      monthly: t('onboarding.income.q5.frequencyMonthly'),
+                    }}
+                  />
+                </InputGroup>
 
                 {/* Label + remove at bottom */}
-                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
                   <LabeledInput
                     label={t('onboarding.income.q5b.labelPlaceholder')}
                     value={row.label}
@@ -415,14 +537,13 @@ export default function IncomeScreen() {
                     inCard
                     containerStyle={{ flex: 1, marginBottom: 0 }}
                   />
-                  {otherIncomeRows.length > 1 && (
-                    <View style={{ height: 44, justifyContent: 'center' }}>
-                      <RemoveButton onPress={() => removeOtherRow(row.id)} />
-                    </View>
-                  )}
+                  {otherIncomeRows.length > 1 ? (
+                    <RemoveButton onPress={() => removeOtherRow(row.id)} />
+                  ) : null}
                 </View>
               </View>
             </AnimatedRow>
+            </ScrollFocusAnchor>
           ))}
 
           <AddAnotherButton
@@ -442,37 +563,29 @@ export default function IncomeScreen() {
         chapter={t('onboarding.income.chapter')}
         title={t('onboarding.income.q5c.title')}
         helper={t('onboarding.income.q5c.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={progress}
-        progressLabel={t('onboarding.progress', { percent: String(progress) })}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
       >
-        <LabeledInput
-          label={t('onboarding.income.q5c.balanceLabel')}
-          value={savingsBalance}
-          onChangeText={setSavingsBalance}
-          numeric
-          placeholder={t('onboarding.income.q5c.balancePlaceholder')}
-          large
-          currency={currency}
-        />
+        <InputGroup label={t('onboarding.income.q5c.balanceLabel')}>
+          <LabeledInput
+            value={savingsBalance}
+            onChangeText={setSavingsBalance}
+            numeric
+            placeholder={t('onboarding.income.q5c.balancePlaceholder')}
+            large
+            inGroup
+            currency={currency}
+          />
+        </InputGroup>
 
-        <LabeledInput
-          label={t('onboarding.income.q5c.monthlyTargetLabel')}
-          value={savingsMonthlyTarget}
-          onChangeText={setSavingsMonthlyTarget}
-          numeric
-          placeholder={t('onboarding.income.q5c.monthlyTargetPlaceholder')}
-          large
-          currency={currency}
-        />
       </QuestionScreen>
     );
   }
 
-  // ── Q5d: Financial goal ──
+  // ── Q5d: Financial goal type ──
   if (step === 'q5d') {
     return (
       <QuestionScreen
@@ -480,54 +593,138 @@ export default function IncomeScreen() {
         chapter={t('onboarding.income.chapter')}
         title={t('onboarding.income.q5d.title')}
         helper={t('onboarding.income.q5d.helper')}
-        illustration={<PlaceholderIllustration />}
         onContinue={handleContinue}
         onBack={handleBack}
         validationError={validationError}
-        progress={progress}
-        progressLabel={t('onboarding.progress', { percent: String(progress) })}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
       >
-        <YesNoToggle
-          value={hasGoal}
-          onChange={setHasGoal}
-          yesLabel={t('onboarding.income.q5d.yes')}
-          noLabel={t('onboarding.income.q5d.no')}
+        <OptionCard
+          icon="📉"
+          label={t('onboarding.income.q5d.typeReduceCosts')}
+          subtitle={t('onboarding.income.q5d.typeReduceCostsDesc')}
+          selected={goalType === GOAL_TYPES.REDUCE_COSTS}
+          onPress={() => {
+            setGoalType(GOAL_TYPES.REDUCE_COSTS);
+            setSaveMode(null);
+          }}
         />
+        <OptionCard
+          icon="💰"
+          label={t('onboarding.income.q5d.typeSaveMoney')}
+          subtitle={t('onboarding.income.q5d.typeSaveMoneyDesc')}
+          selected={goalType === GOAL_TYPES.SAVE_MONEY}
+          onPress={() => setGoalType(GOAL_TYPES.SAVE_MONEY)}
+        />
+        <OptionCard
+          icon="🎯"
+          label={t('onboarding.income.q5d.typeReduceAndSave')}
+          subtitle={t('onboarding.income.q5d.typeReduceAndSaveDesc')}
+          selected={goalType === GOAL_TYPES.REDUCE_AND_SAVE}
+          onPress={() => setGoalType(GOAL_TYPES.REDUCE_AND_SAVE)}
+        />
+      </QuestionScreen>
+    );
+  }
 
-        <AnimatedSlideIn visible={hasGoal === true}>
-          <LabeledInput
-            label={t('onboarding.income.q5d.descriptionLabel')}
-            value={goalDescription}
-            onChangeText={setGoalDescription}
-            placeholder={t('onboarding.income.q5d.descriptionPlaceholder')}
-          />
+  // ── Q5d-mode: Target vs ongoing saving ──
+  if (step === 'q5d-mode') {
+    return (
+      <QuestionScreen
+        animationKey={step}
+        chapter={t('onboarding.income.chapter')}
+        title={t('onboarding.income.q5d.saveModeTitle')}
+        helper={t('onboarding.income.q5d.saveModeHelper')}
+        onContinue={handleContinue}
+        onBack={handleBack}
+        validationError={validationError}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
+      >
+        <OptionCard
+          icon="🎯"
+          label={t('onboarding.income.q5d.saveModeTarget')}
+          subtitle={t('onboarding.income.q5d.saveModeTargetDesc')}
+          selected={saveMode === SAVE_MODES.TARGET}
+          onPress={() => setSaveMode(SAVE_MODES.TARGET)}
+        />
+        <OptionCard
+          icon="🔄"
+          label={t('onboarding.income.q5d.saveModeOngoing')}
+          subtitle={t('onboarding.income.q5d.saveModeOngoingDesc')}
+          selected={saveMode === SAVE_MODES.ONGOING}
+          onPress={() => setSaveMode(SAVE_MODES.ONGOING)}
+        />
+      </QuestionScreen>
+    );
+  }
 
-          <LabeledInput
-            label={t('onboarding.income.q5d.amountLabel')}
-            value={goalAmount}
-            onChangeText={setGoalAmount}
-            numeric
-            placeholder={t('onboarding.income.q5d.amountPlaceholder')}
-            large
-            currency={currency}
-          />
+  // ── Q5d-details: Goal amount fields ──
+  if (step === 'q5d-details') {
+    const isTarget = saveMode === SAVE_MODES.TARGET;
+    return (
+      <QuestionScreen
+        animationKey={step}
+        chapter={t('onboarding.income.chapter')}
+        title={isTarget
+          ? t('onboarding.income.q5d.targetTitle')
+          : t('onboarding.income.q5d.ongoingTitle')}
+        helper={isTarget
+          ? t('onboarding.income.q5d.targetHelper')
+          : t('onboarding.income.q5d.ongoingHelper')}
+        onContinue={handleContinue}
+        onBack={handleBack}
+        validationError={validationError}
+        progress={screenProgress}
+        continueLabel={editContinueLabel}
+      >
+        {isTarget ? (
+          <>
+            <InputGroup label={t('onboarding.income.q5d.descriptionLabel')} optional>
+              <LabeledInput
+                value={goalDescription}
+                onChangeText={setGoalDescription}
+                placeholder={t('onboarding.income.q5d.descriptionPlaceholder')}
+                inCard
+                inGroup
+              />
+            </InputGroup>
 
-          {/* Target date */}
-          <View>
-            <Text style={{
-              ...T.fieldLabel,
-              color: C.muted,
-              marginBottom: S.labelGap,
-            }}>
-              {t('onboarding.income.q5d.dateLabel')}
-            </Text>
-            <DatePicker
-              value={goalDate}
-              onChange={setGoalDate}
-              showDay={false}
+            <InputGroup label={t('onboarding.income.q5d.amountLabel')}>
+              <LabeledInput
+                value={goalAmount}
+                onChangeText={setGoalAmount}
+                numeric
+                placeholder={t('onboarding.income.q5d.amountPlaceholder')}
+                large
+                inGroup
+                currency={currency}
+              />
+            </InputGroup>
+
+            <InputGroup label={t('onboarding.income.q5d.dateLabel')}>
+              <DatePicker
+                value={goalDate}
+                onChange={setGoalDate}
+                showDay={false}
+                inGroup
+                yearEnd={new Date().getFullYear() + 30}
+              />
+            </InputGroup>
+          </>
+        ) : (
+          <InputGroup label={t('onboarding.income.q5d.monthlyTargetLabel')}>
+            <LabeledInput
+              value={savingsMonthlyTarget}
+              onChangeText={setSavingsMonthlyTarget}
+              numeric
+              placeholder={t('onboarding.income.q5d.monthlyTargetPlaceholder')}
+              large
+              inGroup
+              currency={currency}
             />
-          </View>
-        </AnimatedSlideIn>
+          </InputGroup>
+        )}
       </QuestionScreen>
     );
   }

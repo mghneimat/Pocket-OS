@@ -14,3 +14,5 @@ export * from '@gluestack-ui/themed';
 export { PrimaryButton } from './PrimaryButton';
 export { FormInput } from './FormInput';
 export { OptionCard } from './OptionCard';
+export { SurfaceCard } from './SurfaceCard';
+export { OutlineButton } from './OutlineButton';

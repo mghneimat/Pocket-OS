@@ -1,18 +1,60 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, Pressable, ScrollView, Animated } from 'react-native';
+import { View, Text, Pressable, ScrollView, Animated, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
-import { toMonthly, formatCurrency, totalMonthlyCosts, availableBudget } from '../../lib/finance';
+import { toMonthly, formatCurrency, totalMonthlyCosts, availableBudget, displayBudget, effectiveSpendingBudget } from '../../lib/finance';
+import { aggregateHouseholdCosts, computeTotalMonthlyIncome } from '../../lib/householdBudget';
+import { computeGoalGap } from '../../lib/insights';
+import { getMonthlySavingsReservation } from '../../lib/incomeGoals';
+import { splitFlexibleBudget, resolveBudgetSpendingRatio } from '../../lib/budgetSplit';
+import BudgetSplitSlider from '../../components/onboarding/BudgetSplitSlider';
+import LabeledInput from '../../components/onboarding/LabeledInput';
+import InputGroup from '../../components/onboarding/InputGroup';
+import YesNoToggle from '../../components/onboarding/YesNoToggle';
+import { getCurrencySymbol } from '../../lib/currency';
+import { buildBudgetExportRows, exportBudgetCsv, exportBudgetXlsx, exportBudgetPdf } from '../../lib/budgetExport';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import OptionCard from '../../components/onboarding/OptionCard';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
-import { C, S, T, R } from '../../constants/onboarding-theme';
+import BudgetExportBar from '../../components/onboarding/BudgetExportBar';
+import FrequencyPills from '../../components/onboarding/FrequencyPills';
+import BudgetAmountCell from '../../components/onboarding/BudgetAmountCell';
+import BudgetExpandChevron from '../../components/onboarding/BudgetExpandChevron';
+import { useOnboardingLayout, getRowDirection, getLabelCellStyle } from '../../lib/onboardingLayout';
+import { C, S, T, R, tabularNums } from '../../constants/onboarding-theme';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
+import { periodKey } from '../../lib/dailyLog';
+import { normalizeResetDestination } from '../../lib/monthEndRouting';
+
+function getIncomeBreakdownItems(income, t) {
+  const userMonthly = toMonthly(income?.amount || 0, income?.frequency || 'monthly');
+  const partnerMonthly = toMonthly(income?.partnerAmount || 0, income?.partnerFrequency || 'monthly');
+  const breakdowns = [];
+  if (userMonthly > 0) {
+    breakdowns.push({ label: t('onboarding.budget.q14.incomeUser'), amount: userMonthly, indent: 28 });
+  }
+  if (partnerMonthly > 0) {
+    breakdowns.push({ label: t('onboarding.budget.q14.incomePartner'), amount: partnerMonthly, indent: 28 });
+  }
+  (income?.otherIncomeRows || []).forEach((r, idx) => {
+    const monthly = toMonthly(r.amount || 0, r.frequency || 'monthly');
+    if (monthly > 0) {
+      breakdowns.push({
+        label: r.label || `${t('onboarding.budget.q14.incomeOther')} ${idx + 1}`,
+        amount: monthly,
+        indent: 28,
+      });
+    }
+  });
+  return breakdowns;
+}
 
 export default function BudgetScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const layout = useOnboardingLayout();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   const [step, setStep] = useState('q14');
   const [validationError, setValidationError] = useState('');
@@ -22,19 +64,33 @@ export default function BudgetScreen() {
   const [costs, setCosts] = useState([]);
   const [costsByCategory, setCostsByCategory] = useState([]);
   const [debts, setDebts] = useState([]);
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   // Q14 — Monthly budget
   const [monthlyFlexible, setMonthlyFlexible] = useState('');
   const [calculatedBudget, setCalculatedBudget] = useState(0);
+  const [budgetDisplayFrequency, setBudgetDisplayFrequency] = useState('daily');
+  const [budgetSpendingRatio, setBudgetSpendingRatio] = useState(1);
+
+  // Q14 — Savings goal deduction preference
+  const [deductSavingsGoal, setDeductSavingsGoal] = useState(false);
 
   // Q14a — Rollover strategy
   const [rolloverStrategy, setRolloverStrategy] = useState(null);
   const [rolloverMultiplier, setRolloverMultiplier] = useState(null);
+  const [rolloverCapType, setRolloverCapType] = useState('multiplier');
+  const [rolloverCapAmount, setRolloverCapAmount] = useState('');
+  const [resetUnspentDestination, setResetUnspentDestination] = useState('looseMoney');
+  const [resetOtherGoalNote, setResetOtherGoalNote] = useState('');
 
   // Expanded rows state for the summary table
   const [expandedRows, setExpandedRows] = useState({});
   const [tableVisible, setTableVisible] = useState(false);
   const [allExpanded, setAllExpanded] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Animated values for expand/collapse height — store actual pixel heights directly
   const expandAnims = useRef({
@@ -73,6 +129,8 @@ export default function BudgetScreen() {
   };
 
   const toggleRow = (key) => {
+    if (key === 'income' && getIncomeBreakdownItems(income, t).length === 0) return;
+
     const isExpanding = !expandedRows[key];
 
     if (key === 'fixedCosts') {
@@ -121,9 +179,10 @@ export default function BudgetScreen() {
   const toggleAll = () => {
     const willExpand = !allExpanded;
     setAllExpanded(willExpand);
+    const hasIncomeBreakdown = getIncomeBreakdownItems(income, t).length > 0;
 
     const newExpanded = { ...expandedRows };
-    newExpanded.income = willExpand;
+    newExpanded.income = hasIncomeBreakdown && willExpand;
     newExpanded.fixedCosts = willExpand;
 
     costsByCategory.forEach((cat) => {
@@ -133,14 +192,18 @@ export default function BudgetScreen() {
 
     setExpandedRows(newExpanded);
 
-    // Animate income
-    const incomeToValue = willExpand ? 1 : 0;
-    expandAnims.income.setValue(willExpand ? 0 : 1);
-    Animated.timing(expandAnims.income, {
-      toValue: incomeToValue,
-      duration: 280,
-      useNativeDriver: false,
-    }).start();
+    // Animate income only when there are line items to show
+    if (hasIncomeBreakdown) {
+      const incomeToValue = willExpand ? 1 : 0;
+      expandAnims.income.setValue(willExpand ? 0 : 1);
+      Animated.timing(expandAnims.income, {
+        toValue: incomeToValue,
+        duration: 280,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      expandAnims.income.setValue(0);
+    }
 
     // Animate all category sub-rows
     costsByCategory.forEach((cat) => {
@@ -266,12 +329,17 @@ export default function BudgetScreen() {
 
   useEffect(() => {
     (async () => {
+      setDataLoading(true);
+      setDataError('');
+      try {
       const inc = await getData('pocketos_income');
       const d = await getData('pocketos_debts') || [];
+      const loc = await getData('pocketos_location');
+      if (loc?.currency) setCurrencyCode(loc.currency);
       setIncome(inc);
       setDebts(d);
 
-      // Aggregate all fixed costs from separate storage keys
+      const household = await getData('pocketos_household') || {};
       const housing = await getData('pocketos_housing') || {};
       const transport = await getData('pocketos_transport') || {};
       const health = await getData('pocketos_health') || {};
@@ -280,144 +348,16 @@ export default function BudgetScreen() {
       const subs = await getData('pocketos_subscriptions') || [];
       const otherCosts = await getData('pocketos_other_costs') || [];
 
-      const allCosts = [];
-      const byCategory = [];
-
-      // Housing costs
-      const housingItems = [];
-      if (housing.type === 'renting') {
-        if (housing.rent) housingItems.push({ label: 'Rent', amount: housing.rent, frequency: 'monthly' });
-        if (housing.utilities) housingItems.push({ label: 'Utilities', amount: housing.utilities, frequency: 'monthly' });
-      }
-      if (housing.internetAmount) housingItems.push({ label: 'Internet', amount: housing.internetAmount, frequency: housing.internetFrequency || 'monthly' });
-      if (housing.mortgageAmount) housingItems.push({ label: 'Mortgage', amount: housing.mortgageAmount, frequency: 'monthly' });
-      if (housing.hasOtherCosts && housing.otherCostRows) {
-        housing.otherCostRows.forEach((r, idx) => {
-          if (r.amount) housingItems.push({ label: r.label || `Other cost ${idx + 1}`, amount: r.amount, frequency: 'monthly' });
-        });
-      }
-      if (housing.contributesToFamily && housing.familyContributionRows) {
-        housing.familyContributionRows.forEach((r, idx) => {
-          if (r.amount) housingItems.push({ label: r.label || `Family contribution ${idx + 1}`, amount: r.amount, frequency: 'monthly' });
-        });
-      }
-      // Government taxes
-      if (housing.govtTaxes) {
-        const gt = housing.govtTaxes;
-        if (gt.wasteTax && gt.wasteTaxAmount) housingItems.push({ label: 'Waste tax', amount: gt.wasteTaxAmount, frequency: 'annual' });
-        if (gt.tvLicence && gt.tvLicenceAmount) housingItems.push({ label: 'TV licence', amount: gt.tvLicenceAmount, frequency: 'annual' });
-        if (gt.radioLicence && gt.radioLicenceAmount) housingItems.push({ label: 'Radio licence', amount: gt.radioLicenceAmount, frequency: 'annual' });
-        if (gt.customItems) {
-          gt.customItems.forEach((item, idx) => {
-            if (item.amount) housingItems.push({ label: item.label || `Tax ${idx + 1}`, amount: item.amount, frequency: item.frequency || 'annual' });
-          });
-        }
-      }
-      if (housingItems.length > 0) {
-        byCategory.push({ category: 'housing', label: t('onboarding.budget.q14.cat.housing'), items: housingItems });
-        allCosts.push(...housingItems);
-      }
-
-      // Transport costs
-      const transportItems = [];
-      if (transport.hasVehicle && transport.vehicles) {
-        transport.vehicles.forEach((v, vi) => {
-          const prefix = transport.vehicles.length > 1 ? `Vehicle ${vi + 1} ` : '';
-          if (v.fuelCost) transportItems.push({ label: `${prefix}Fuel`, amount: v.fuelCost, frequency: 'monthly' });
-          if (v.hasInsurance && v.insurancePremium) transportItems.push({ label: `${prefix}Insurance`, amount: v.insurancePremium, frequency: v.insuranceFrequency || 'annual' });
-          if (v.hasParking && v.parkingAmount) transportItems.push({ label: `${prefix}Parking`, amount: v.parkingAmount, frequency: v.parkingFrequency || 'annual' });
-        });
-      }
-      if (transport.hasPublicTransport && transport.ptAmount) {
-        transportItems.push({ label: 'Public transport', amount: transport.ptAmount, frequency: transport.ptFrequency || 'monthly' });
-      }
-      if (transportItems.length > 0) {
-        byCategory.push({ category: 'transport', label: t('onboarding.budget.q14.cat.transport'), items: transportItems });
-        allCosts.push(...transportItems);
-      }
-
-      // Health insurance costs
-      const healthItems = [];
-      if (health) {
-        Object.entries(health).forEach(([key, member]) => {
-          if (member && member.confirmed && member.coverage !== 'employer' && member.premium) {
-            const name = key === 'self' ? 'Your insurance' : key === 'partner' ? "Partner's insurance" : `Child's insurance`;
-            // For custom frequency, compute monthly equivalent from premium / customFrequencyMonths
-            const freq = member.frequency || 'monthly';
-            const amount = freq === 'custom' && member.customFrequencyMonths
-              ? Number(member.premium) / Number(member.customFrequencyMonths)
-              : Number(member.premium);
-            healthItems.push({ label: name, amount, frequency: freq === 'custom' ? 'monthly' : freq });
-          }
-        });
-      }
-      if (healthItems.length > 0) {
-        byCategory.push({ category: 'health', label: t('onboarding.budget.q14.cat.health'), items: healthItems });
-        allCosts.push(...healthItems);
-      }
-
-      // Children's costs
-      const childrenItems = [];
-      if (Object.keys(childrenCosts).length > 0) {
-        Object.entries(childrenCosts).forEach(([childKey, child]) => {
-          if (child && typeof child === 'object') {
-            Object.entries(child).forEach(([fieldKey, field]) => {
-              if (field && field.amount) {
-                const fieldLabel = fieldKey === 'nursery' ? 'Nursery' : fieldKey === 'school' ? 'School' : fieldKey === 'afterSchool' ? 'After-school' : fieldKey === 'clubs' ? 'Clubs' : fieldKey === 'other' ? 'Other' : fieldKey;
-                childrenItems.push({ label: `${fieldLabel}`, amount: field.amount, frequency: field.frequency || 'monthly' });
-              }
-            });
-          }
-        });
-      }
-      if (childrenItems.length > 0) {
-        byCategory.push({ category: 'children', label: t('onboarding.budget.q14.cat.children'), items: childrenItems });
-        allCosts.push(...childrenItems);
-      }
-
-      // Pet costs
-      const petItems = [];
-      pets.forEach((pet, pi) => {
-        const prefix = pet.name ? `${pet.name} ` : `Pet ${pi + 1} `;
-        if (pet.foodAmount) petItems.push({ label: `${prefix}Food`, amount: pet.foodAmount, frequency: pet.foodFrequency || 'monthly' });
-        if (pet.vetAmount) petItems.push({ label: `${prefix}Vet`, amount: pet.vetAmount, frequency: pet.vetFrequency || 'monthly' });
-      });
-      if (petItems.length > 0) {
-        byCategory.push({ category: 'pets', label: t('onboarding.budget.q14.cat.pets'), items: petItems });
-        allCosts.push(...petItems);
-      }
-
-      // Subscriptions
-      const subItems = [];
-      subs.forEach(sub => {
-        if (sub.cost) {
-          const transKey = `onboarding.subscriptions.q11.services.${sub.name}`;
-          const translated = t(transKey);
-          // t() returns the key itself if not found
-          const subLabel = translated !== transKey ? translated : (sub.name || 'Subscription');
-          subItems.push({ label: subLabel, amount: parseFloat(sub.cost), frequency: sub.frequency || 'monthly' });
-        }
-      });
-      if (subItems.length > 0) {
-        byCategory.push({ category: 'subscriptions', label: t('onboarding.budget.q14.cat.subscriptions'), items: subItems });
-        allCosts.push(...subItems);
-      }
-
-      // Other costs
-      const otherItems = [];
-      otherCosts.forEach(c => {
-        if (c.amount) {
-          const transKey = `onboarding.otherCosts.q12.costs.${c.name}`;
-          const translated = t(transKey);
-          // t() returns the key itself if not found
-          const costLabel = translated !== transKey ? translated : (c.name || 'Other cost');
-          otherItems.push({ label: costLabel, amount: parseFloat(c.amount), frequency: c.frequency || 'monthly' });
-        }
-      });
-      if (otherItems.length > 0) {
-        byCategory.push({ category: 'other', label: t('onboarding.budget.q14.cat.other'), items: otherItems });
-        allCosts.push(...otherItems);
-      }
+      const { allCosts, byCategory } = aggregateHouseholdCosts({
+        housing,
+        transport,
+        health,
+        childrenCosts,
+        pets,
+        subs,
+        otherCosts,
+        household,
+      }, t);
 
       setCosts(allCosts);
       setCostsByCategory(byCategory);
@@ -429,10 +369,7 @@ export default function BudgetScreen() {
       }
 
       // Calculate available budget
-      const userMonthly = toMonthly(inc?.amount || 0, inc?.frequency || 'monthly');
-      const partnerMonthly = toMonthly(inc?.partnerAmount || 0, inc?.partnerFrequency || 'monthly');
-      const otherMonthly = (inc?.otherIncomeRows || []).reduce((sum, s) => sum + toMonthly(s.amount || 0, s.frequency || 'monthly'), 0);
-      const totalIncome = userMonthly + partnerMonthly + otherMonthly;
+      const totalIncome = computeTotalMonthlyIncome(inc);
 
       // Fixed costs from all aggregated costs
       const fixedCosts = totalMonthlyCosts(allCosts);
@@ -442,21 +379,129 @@ export default function BudgetScreen() {
 
       const avail = availableBudget(totalIncome, fixedCosts, debtPayments);
       setCalculatedBudget(avail);
+      // Always derive flexible budget from live income/costs on this screen — not a stale saved value
       setMonthlyFlexible(String(Math.round(avail)));
+
+      const savedBudget = await getData('pocketos_budget');
+      if (savedBudget?.budgetDisplayFrequency) {
+        setBudgetDisplayFrequency(savedBudget.budgetDisplayFrequency);
+      }
+      if (savedBudget?.rolloverStrategy) {
+        setRolloverStrategy(savedBudget.rolloverStrategy);
+      }
+      if (savedBudget?.rolloverMultiplier) {
+        setRolloverMultiplier(savedBudget.rolloverMultiplier);
+      }
+      if (savedBudget?.rolloverCapType) {
+        setRolloverCapType(savedBudget.rolloverCapType);
+      }
+      if (savedBudget?.rolloverCapAmount != null) {
+        setRolloverCapAmount(String(savedBudget.rolloverCapAmount));
+      }
+      if (savedBudget?.resetUnspentDestination) {
+        setResetUnspentDestination(normalizeResetDestination(savedBudget.resetUnspentDestination));
+      }
+      if (savedBudget?.resetOtherGoalNote) {
+        setResetOtherGoalNote(savedBudget.resetOtherGoalNote);
+      }
+      if (savedBudget?.deductSavingsGoal === true) {
+        setDeductSavingsGoal(true);
+      }
+      if (savedBudget) {
+        setBudgetSpendingRatio(resolveBudgetSpendingRatio(savedBudget, avail));
+      }
+      if (isEditMode) {
+        setStep('q14');
+      }
 
       // Show the table with animation once data is ready
       setTableVisible(true);
+      } catch {
+        setDataError(t('onboarding.budget.q14.loadError'));
+        setTableVisible(false);
+      } finally {
+        setDataLoading(false);
+      }
     })();
-  }, []);
+  }, [reloadKey, t, isEditMode]);
+
+  const saveBudget = async () => {
+    let flex = parseFloat(monthlyFlexible);
+    if (!Number.isFinite(flex)) {
+      const userM = toMonthly(income?.amount || 0, income?.frequency || 'monthly');
+      const partnerM = toMonthly(income?.partnerAmount || 0, income?.partnerFrequency || 'monthly');
+      const otherM = (income?.otherIncomeRows || []).reduce(
+        (sum, s) => sum + toMonthly(s.amount || 0, s.frequency || 'monthly'),
+        0,
+      );
+      flex = availableBudget(
+        userM + partnerM + otherM,
+        totalMonthlyCosts(costs),
+        debts.reduce((sum, debt) => sum + parseFloat(debt.minPayment || 0), 0),
+      );
+    }
+    const strategy = rolloverStrategy || 'free';
+    const { spendingMonthly, savingsShift, ratio } = splitFlexibleBudget(flex, budgetSpendingRatio);
+
+    await completeSection({
+      persist: async () => {
+        const existing = (await getData('pocketos_budget')) || {};
+        await setData('pocketos_budget', {
+          ...existing,
+          monthlyFlexible: spendingMonthly,
+          budgetSpendingRatio: ratio,
+          budgetSavingsShift: savingsShift,
+          budgetDisplayFrequency,
+          rolloverStrategy: strategy,
+          rolloverMultiplier: strategy === 'capped' && rolloverCapType === 'multiplier' ? rolloverMultiplier : null,
+          rolloverCapType: strategy === 'capped' ? rolloverCapType : null,
+          rolloverCapAmount: strategy === 'capped' && rolloverCapType === 'amount'
+            ? Math.round(parseFloat(rolloverCapAmount) || 0)
+            : null,
+          resetUnspentDestination: strategy === 'reset' ? resetUnspentDestination : null,
+          resetOtherGoalNote: strategy === 'reset' && resetUnspentDestination === 'otherGoal'
+            ? (resetOtherGoalNote.trim() || null)
+            : null,
+          rolloverBalance: existing.rolloverBalance ?? 0,
+          looseMoneyBalance: existing.looseMoneyBalance ?? 0,
+          otherGoalBalance: existing.otherGoalBalance ?? 0,
+          lastClosedPeriod: existing.lastClosedPeriod || periodKey(),
+          monthEndHistory: existing.monthEndHistory || [],
+          deductSavingsGoal: deductSavingsGoal === true,
+        });
+      },
+      onboardingPatch: { completed: false, currentStep: 'budget', percentComplete: 95 },
+      nextRoute: '/(onboarding)/splash-review',
+    });
+  };
 
   const handleContinue = async () => {
     setValidationError('');
 
+    if (isEditMode) {
+      await saveBudget();
+      return;
+    }
+
     if (step === 'q14') {
-      if (!monthlyFlexible) {
+      if (dataLoading || dataError) return;
+      const userM = toMonthly(income?.amount || 0, income?.frequency || 'monthly');
+      const partnerM = toMonthly(income?.partnerAmount || 0, income?.partnerFrequency || 'monthly');
+      const otherM = (income?.otherIncomeRows || []).reduce(
+        (sum, s) => sum + toMonthly(s.amount || 0, s.frequency || 'monthly'),
+        0,
+      );
+      const flexMonthly = availableBudget(
+        userM + partnerM + otherM,
+        totalMonthlyCosts(costs),
+        debts.reduce((sum, debt) => sum + parseFloat(debt.minPayment || 0), 0),
+      );
+      if (!Number.isFinite(flexMonthly)) {
         setValidationError(t('onboarding.budget.q14.validation'));
         return;
       }
+      setMonthlyFlexible(String(Math.round(flexMonthly)));
+      setCalculatedBudget(flexMonthly);
       setStep('q14a');
       return;
     }
@@ -466,21 +511,22 @@ export default function BudgetScreen() {
         setValidationError(t('onboarding.budget.q14a.validation'));
         return;
       }
+      if (rolloverStrategy === 'capped') {
+        if (rolloverCapType === 'multiplier' && !rolloverMultiplier) {
+          setValidationError(t('onboarding.budget.q14a.validationCapMultiplier'));
+          return;
+        }
+        if (rolloverCapType === 'amount' && !(parseFloat(rolloverCapAmount) > 0)) {
+          setValidationError(t('onboarding.budget.q14a.validationCapAmount'));
+          return;
+        }
+      }
+      if (rolloverStrategy === 'reset' && resetUnspentDestination === 'otherGoal' && !resetOtherGoalNote.trim()) {
+        setValidationError(t('onboarding.budget.q14a.validationOtherGoal'));
+        return;
+      }
 
-      await setData('pocketos_budget', {
-        monthlyFlexible: parseFloat(monthlyFlexible) || 0,
-        rolloverStrategy,
-        rolloverMultiplier: rolloverStrategy === 'capped' ? rolloverMultiplier : null,
-        rolloverBalance: 0,
-      });
-
-      await setData('pocketos_onboarding', {
-        completed: false,
-        currentStep: 'budget',
-        percentComplete: 95,
-      });
-
-      router.replace('/(onboarding)/splash-review');
+      await saveBudget();
       return;
     }
   };
@@ -488,11 +534,11 @@ export default function BudgetScreen() {
   const handleBack = () => {
     setValidationError('');
     if (step === 'q14a') { setStep('q14'); return; }
-    router.replace('/(onboarding)/splash-budget');
+    leaveSection(() => router.replace('/(onboarding)/splash-budget'));
   };
 
   const progress = 95;
-  const progressLabel = t('onboarding.progress', { percent: progress });
+  const screenProgress = isEditMode ? undefined : progress;
 
   const renderQ14 = () => {
     const userMonthly = toMonthly(income?.amount || 0, income?.frequency || 'monthly');
@@ -501,15 +547,28 @@ export default function BudgetScreen() {
     const totalIncome = userMonthly + partnerMonthly + otherMonthly;
     const fixedCosts = totalMonthlyCosts(costs);
     const debtPayments = debts.reduce((sum, debt) => sum + parseFloat(debt.minPayment || 0), 0);
+    const liveFlexibleMonthly = availableBudget(totalIncome, fixedCosts, debtPayments);
+    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const goalGap = computeGoalGap({ income, monthlyFlexible: liveFlexibleMonthly });
+    const monthlySavingsRequired = getMonthlySavingsReservation(income, goalGap);
+    const hasSavingsGoal = monthlySavingsRequired > 0;
+    const { spendingMonthly, savingsShift } = splitFlexibleBudget(liveFlexibleMonthly, budgetSpendingRatio);
+    const effectiveMonthly = effectiveSpendingBudget(
+      spendingMonthly,
+      monthlySavingsRequired,
+      deductSavingsGoal === true,
+    );
+    const previewAmount = displayBudget(effectiveMonthly, budgetDisplayFrequency, daysInMonth);
 
-    const currency = 'CZK';
+    const incomeBreakdowns = getIncomeBreakdownItems(income, t);
+    const hasIncomeBreakdown = incomeBreakdowns.length > 0;
 
     const rows = [
       {
         key: 'income',
         label: t('onboarding.budget.q14.income'),
         amount: totalIncome,
-        expandable: true,
+        expandable: hasIncomeBreakdown,
       },
       {
         key: 'fixedCosts',
@@ -525,32 +584,79 @@ export default function BudgetScreen() {
       },
     ];
 
-    const renderChevron = (isExpanded) => (
-      <Text style={{ fontSize: 12, color: C.placeholder, marginLeft: 6 }}>
-        {isExpanded ? '▲' : '▼'}
-      </Text>
-    );
+    const rowToggleLabel = (label, isExpanded) =>
+      isExpanded
+        ? t('onboarding.budget.q14.a11y.collapseRow', { label })
+        : t('onboarding.budget.q14.a11y.expandRow', { label });
+
+    const renderChevron = (isExpanded) => <BudgetExpandChevron expanded={isExpanded} />;
+
+    if (dataLoading) {
+      return (
+        <View accessibilityRole="progressbar" accessibilityLabel={t('onboarding.budget.q14.loading')}>
+          <Text style={{ ...T.helper, color: C.muted }}>{t('onboarding.budget.q14.loading')}</Text>
+        </View>
+      );
+    }
+
+    if (dataError) {
+      return (
+        <View>
+          <Text style={{ ...T.helper, color: C.danger, marginBottom: 16 }}>{dataError}</Text>
+          <Pressable
+            onPress={() => setReloadKey((k) => k + 1)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.retry')}
+            style={({ pressed }) => ({
+              alignSelf: 'flex-start',
+              paddingVertical: 12,
+              paddingHorizontal: 20,
+              borderRadius: R.button,
+              backgroundColor: pressed ? C.accentPressed : C.accent,
+              minHeight: 44,
+              justifyContent: 'center',
+            })}
+          >
+            <Text style={{ fontSize: 15, fontWeight: '600', color: '#FFFFFF' }}>{t('common.retry')}</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    const incomeBreakdownExport = incomeBreakdowns.map(({ label, amount }) => ({ label, amount }));
+
+    const exportRows = buildBudgetExportRows({
+      summaryRows: rows,
+      incomeBreakdown: incomeBreakdownExport,
+      costsByCategory: costsByCategory.map((cat) => ({
+        label: cat.label,
+        items: cat.items.map((item) => ({
+          label: item.label,
+          amount: toMonthly(item.amount || 0, item.frequency || 'monthly'),
+        })),
+      })),
+      totalBudget: liveFlexibleMonthly,
+      currency,
+      totalLabel: t('onboarding.budget.q14.budgetLabel'),
+    });
+
+    const exportMeta = {
+      title: t('onboarding.budget.q14.title'),
+      summaryTitle: t('onboarding.budget.q14.summaryTitle'),
+      amountTitle: t('onboarding.budget.q14.amount'),
+      currency,
+    };
+
+    const handleExportCsv = () => exportBudgetCsv(exportRows, exportMeta);
+    const handleExportXlsx = () => exportBudgetXlsx(exportRows, exportMeta);
+    const handleExportPdf = () => exportBudgetPdf(exportRows, exportMeta);
 
     const renderIncomeBreakdown = () => {
-      const breakdowns = [];
-      if (userMonthly > 0) {
-        breakdowns.push({ label: t('onboarding.budget.q14.incomeUser'), amount: userMonthly, indent: 28 });
-      }
-      if (partnerMonthly > 0) {
-        breakdowns.push({ label: t('onboarding.budget.q14.incomePartner'), amount: partnerMonthly, indent: 28 });
-      }
-      // Individual other income rows
-      const otherRows = income?.otherIncomeRows || [];
-      otherRows.forEach((r, idx) => {
-        const monthly = toMonthly(r.amount || 0, r.frequency || 'monthly');
-        if (monthly > 0) {
-          breakdowns.push({ label: r.label || `Other income ${idx + 1}`, amount: monthly, indent: 28 });
-        }
-      });
+      if (!hasIncomeBreakdown) return null;
 
       const h = expandAnims.income.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, contentHeights.income || 200],
+        outputRange: [0, contentHeights.income || incomeBreakdowns.length * 33],
       });
 
       return (
@@ -559,28 +665,29 @@ export default function BudgetScreen() {
             onLayout={(e) => onContentLayout('income', e)}
             style={{ backgroundColor: C.bg }}
           >
-            {breakdowns.map((b, i) => (
+            {incomeBreakdowns.map((b, i) => (
               <View
                 key={i}
                 style={{
-                  flexDirection: 'row',
+                  flexDirection: getRowDirection(layout),
                   borderTopWidth: 1,
                   borderTopColor: C.divider,
-                  borderBottomWidth: i === breakdowns.length - 1 ? 1 : 0,
+                  borderBottomWidth: i === incomeBreakdowns.length - 1 ? 1 : 0,
                   borderBottomColor: C.divider,
                 }}
               >
-                <View style={{ flex: 1, paddingVertical: 8, paddingLeft: b.indent, justifyContent: 'flex-start', borderRightWidth: 1, borderRightColor: C.divider }}>
-                  <Text style={{ fontSize: 13, color: C.muted }}>{b.label}</Text>
+                <View style={getLabelCellStyle(layout, { paddingVertical: 8, indent: b.indent - 16 })}>
+                  <Text style={{ flex: 1, fontSize: 13, color: C.muted }} numberOfLines={2}>{b.label}</Text>
                 </View>
-                <View style={{ width: 140, paddingVertical: 8, paddingRight: 16, flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 13, fontWeight: '500', color: C.primary }}>
-                      {formatCurrency(b.amount, '')}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 11, fontWeight: '400', color: C.placeholder }}>{currency}</Text>
-                </View>
+                <BudgetAmountCell
+                  amount={b.amount}
+                  currency={currency}
+                  layout={layout}
+                  fontSize={13}
+                  fontWeight="500"
+                  color={C.primary}
+                  paddingVertical={8}
+                />
               </View>
             ))}
           </View>
@@ -614,27 +721,36 @@ export default function BudgetScreen() {
                   {/* Category header row — pressable toggle */}
                   <Pressable
                     onPress={() => toggleCategory(catKey)}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
+                    accessibilityRole="button"
+                    accessibilityLabel={rowToggleLabel(cat.label, isCatExpanded)}
+                    accessibilityState={{ expanded: isCatExpanded }}
+                    style={({ pressed, hovered }) => ({
+                      minHeight: 44,
+                      flexDirection: getRowDirection(layout),
                       borderTopWidth: 1,
                       borderTopColor: C.divider,
-                      backgroundColor: pressed ? C.divider : C.overlayHoverDarker,
+                      backgroundColor: pressed
+                        ? C.overlayPressed
+                        : hovered
+                          ? C.overlayHover
+                          : C.overlayHoverDarker,
+                      ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
                     })}
                   >
-                    <View style={{ flex: 1, paddingVertical: 8, paddingLeft: 28, justifyContent: 'flex-start', borderRightWidth: 1, borderRightColor: C.divider, flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: C.text }}>{cat.label}</Text>
-                      <Text style={{ fontSize: 10, color: C.disabled, marginLeft: 6 }}>
-                        {isCatExpanded ? '▲' : '▼'}
-                      </Text>
-                    </View>
-                    <View style={{ width: 140, paddingVertical: 8, paddingRight: 16, flexDirection: 'row', alignItems: 'center' }}>
-                      <View style={{ flex: 1, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: C.danger }}>
-                          {formatCurrency(catMonthly, '')}
-                        </Text>
+                    <View style={getLabelCellStyle(layout, { paddingVertical: 8, indent: 12 })}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, maxWidth: '100%' }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: C.text, flexShrink: 1 }} numberOfLines={2}>{cat.label}</Text>
+                        <BudgetExpandChevron expanded={isCatExpanded} />
                       </View>
-                      <Text style={{ fontSize: 11, fontWeight: '400', color: C.placeholder }}>{currency}</Text>
                     </View>
+                    <BudgetAmountCell
+                      amount={catMonthly}
+                      currency={currency}
+                      layout={layout}
+                      fontSize={13}
+                      color={C.danger}
+                      paddingVertical={8}
+                    />
                   </Pressable>
                   {/* Individual items within category — animated expand/collapse */}
                   <Animated.View style={{ height: catHeight, overflow: 'hidden' }}>
@@ -648,24 +764,25 @@ export default function BudgetScreen() {
                           <View
                             key={j}
                             style={{
-                              flexDirection: 'row',
+                              flexDirection: getRowDirection(layout),
                               borderTopWidth: 1,
                               borderTopColor: C.divider,
                               borderBottomWidth: isLastItem ? 1 : 0,
                               borderBottomColor: C.divider,
                             }}
                           >
-                            <View style={{ flex: 1, paddingVertical: 6, paddingLeft: 44, justifyContent: 'flex-start', borderRightWidth: 1, borderRightColor: C.divider }}>
-                              <Text style={{ fontSize: 12, color: C.muted }}>{item.label}</Text>
+                            <View style={getLabelCellStyle(layout, { paddingVertical: 6, indent: 28 })}>
+                              <Text style={{ flex: 1, fontSize: 12, color: C.muted }} numberOfLines={2}>{item.label}</Text>
                             </View>
-                            <View style={{ width: 140, paddingVertical: 6, paddingRight: 16, flexDirection: 'row', alignItems: 'center' }}>
-                              <View style={{ flex: 1, alignItems: 'center' }}>
-                                <Text style={{ fontSize: 12, fontWeight: '400', color: C.muted }}>
-                                  {formatCurrency(itemMonthly, '')}
-                                </Text>
-                              </View>
-                              <Text style={{ fontSize: 10, fontWeight: '400', color: C.disabled }}>{currency}</Text>
-                            </View>
+                            <BudgetAmountCell
+                              amount={itemMonthly}
+                              currency={currency}
+                              layout={layout}
+                              fontSize={12}
+                              fontWeight="400"
+                              color={C.muted}
+                              paddingVertical={6}
+                            />
                           </View>
                         );
                       })}
@@ -686,50 +803,70 @@ export default function BudgetScreen() {
         <View style={{
           marginTop: 20,
           marginBottom: 20,
-          borderRadius: 16,
+          borderRadius: R.card,
           borderWidth: 1,
           borderColor: C.border,
           backgroundColor: C.surface,
           overflow: 'hidden',
         }}>
-          {/* Table header */}
-          <View style={{
-            flexDirection: 'row',
-            backgroundColor: C.bg,
-            borderBottomWidth: 1,
-            borderBottomColor: C.divider,
-          }}>
-            <View style={{ flex: 1, paddingVertical: 14, paddingLeft: 16, borderRightWidth: 1, borderRightColor: C.divider }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                Description
+          {/* Table header — stacked note on narrow screens */}
+          {layout.stackAmount ? (
+            <View style={{
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              backgroundColor: C.bg,
+              borderBottomWidth: 1,
+              borderBottomColor: C.divider,
+            }}>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>
+                {t('onboarding.budget.q14.amountsNote', { currency })}
               </Text>
             </View>
-            <View style={{ width: 140, paddingVertical: 14, paddingRight: 16, alignItems: 'center' }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                Amount
-              </Text>
+          ) : (
+            <View style={{
+              flexDirection: 'row',
+              backgroundColor: C.bg,
+              borderBottomWidth: 1,
+              borderBottomColor: C.divider,
+            }}>
+              <View style={{ flex: 1, paddingVertical: 14, paddingLeft: 16, borderRightWidth: 1, borderRightColor: C.divider }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>
+                  {t('onboarding.budget.q14.summaryTitle')}
+                </Text>
+              </View>
+              <View style={{ width: layout.amountColumnWidth, paddingVertical: 14, paddingRight: layout.isCompact ? 10 : 16, alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>
+                  {t('onboarding.budget.q14.amount')}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Expand/collapse all button */}
           <Pressable
             onPress={toggleAll}
-            style={({ pressed }) => ({
+            accessibilityRole="button"
+            accessibilityLabel={allExpanded ? t('onboarding.budget.q14.a11y.collapseAll') : t('onboarding.budget.q14.a11y.expandAll')}
+            style={({ pressed, hovered }) => ({
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              paddingVertical: 8,
-              backgroundColor: pressed ? C.overlayHoverDarker : C.bg,
+              paddingVertical: 12,
+              minHeight: 44,
+              backgroundColor: pressed
+                ? C.overlayPressed
+                : hovered
+                  ? C.overlayHover
+                  : C.bg,
               borderBottomWidth: 1,
               borderBottomColor: C.divider,
+              ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
             })}
           >
             <Text style={{ fontSize: 12, fontWeight: '600', color: C.primary, marginRight: 6 }}>
-              {allExpanded ? 'Collapse all' : 'Expand all'}
+              {allExpanded ? t('onboarding.budget.q14.collapseAll') : t('onboarding.budget.q14.expandAll')}
             </Text>
-            <Text style={{ fontSize: 10, color: C.primary }}>
-              {allExpanded ? '▲' : '▼'}
-            </Text>
+            <BudgetExpandChevron expanded={allExpanded} />
           </Pressable>
 
           {/* Table rows */}
@@ -738,27 +875,39 @@ export default function BudgetScreen() {
               <Pressable
                 onPress={row.expandable ? () => toggleRow(row.key) : undefined}
                 disabled={!row.expandable}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
+                accessibilityRole={row.expandable ? 'button' : 'text'}
+                accessibilityLabel={row.expandable ? rowToggleLabel(row.label, expandedRows[row.key]) : row.label}
+                accessibilityState={row.expandable ? { expanded: !!expandedRows[row.key] } : undefined}
+                style={({ pressed, hovered }) => ({
+                  flexDirection: getRowDirection(layout),
                   borderBottomWidth: i < rows.length - 1 ? 1 : 0,
                   borderBottomColor: C.divider,
-                  backgroundColor: pressed && row.expandable ? C.overlayHoverDarker : 'transparent',
+                  backgroundColor: row.expandable
+                    ? pressed
+                      ? C.overlayPressed
+                      : hovered
+                        ? C.overlayHover
+                        : 'transparent'
+                    : 'transparent',
+                  minHeight: row.expandable ? 44 : undefined,
+                  ...(row.expandable && Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
                 })}
               >
-                <View style={{ flex: 1, paddingVertical: 12, paddingLeft: 16, justifyContent: 'flex-start', borderRightWidth: 1, borderRightColor: C.divider, flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 14, color: C.text }}>
-                    {row.label}
-                  </Text>
-                  {row.expandable && renderChevron(expandedRows[row.key])}
-                </View>
-                <View style={{ width: 140, paddingVertical: 12, paddingRight: 16, flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: C.text }}>
-                      {row.amount >= 0 ? formatCurrency(row.amount, '') : `-${formatCurrency(Math.abs(row.amount), '')}`}
+                <View style={getLabelCellStyle(layout, { paddingVertical: 12 })}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, maxWidth: '100%' }}>
+                    <Text style={{ fontSize: 14, color: C.text, flexShrink: 1 }} numberOfLines={layout.stackAmount ? 3 : 2}>
+                      {row.label}
                     </Text>
+                    {row.expandable ? <BudgetExpandChevron expanded={!!expandedRows[row.key]} /> : null}
                   </View>
-                  <Text style={{ fontSize: 11, fontWeight: '400', color: C.placeholder }}>{currency}</Text>
                 </View>
+                <BudgetAmountCell
+                  amount={row.amount}
+                  currency={currency}
+                  layout={layout}
+                  fontSize={14}
+                  paddingVertical={12}
+                />
               </Pressable>
 
               {/* Expanded content */}
@@ -769,85 +918,244 @@ export default function BudgetScreen() {
 
           {/* Total row */}
           <View style={{
-            flexDirection: 'row',
+            flexDirection: getRowDirection(layout),
             backgroundColor: C.bg,
             borderTopWidth: 1,
             borderTopColor: C.divider,
           }}>
-            <View style={{ flex: 1, paddingVertical: 14, paddingLeft: 16, justifyContent: 'flex-start', borderRightWidth: 1, borderRightColor: C.divider }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: C.primary }}>
-                Your monthly flexible budget
+            <View style={getLabelCellStyle(layout, { paddingVertical: 14 })}>
+              <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: C.primary }} numberOfLines={2}>
+                {t('onboarding.budget.q14.budgetLabel')}
               </Text>
             </View>
-            <View style={{ width: 140, paddingVertical: 14, paddingRight: 16, flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ flex: 1, alignItems: 'center' }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: calculatedBudget >= 0 ? C.positive : C.danger }}>
-                  {formatCurrency(calculatedBudget, '')}
-                </Text>
-              </View>
-              <Text style={{ fontSize: 12, fontWeight: '500', color: C.placeholder }}>{currency}</Text>
-            </View>
+            <BudgetAmountCell
+              amount={liveFlexibleMonthly}
+              currency={currency}
+              layout={layout}
+              fontSize={16}
+              fontWeight="700"
+              color={liveFlexibleMonthly >= 0 ? C.positive : C.danger}
+              paddingVertical={14}
+            />
           </View>
         </View>
         </AnimatedSlideIn>
 
-        <Text style={{ ...T.helper, color: C.muted, marginBottom: 12 }}>
-          {t('onboarding.budget.q14.helper')}
-        </Text>
+        {hasSavingsGoal ? (
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ ...T.fieldLabel, marginBottom: 8 }}>
+              {t('onboarding.budget.q14.deductSavingsGoal.label')}
+            </Text>
+            <Text style={{ ...T.helper, color: C.muted, marginBottom: 12 }}>
+              {t('onboarding.budget.q14.deductSavingsGoal.helper')}
+            </Text>
+            <YesNoToggle
+              value={deductSavingsGoal}
+              onChange={setDeductSavingsGoal}
+              yesLabel={t('onboarding.budget.q14.deductSavingsGoal.yes')}
+              noLabel={t('onboarding.budget.q14.deductSavingsGoal.no')}
+            />
+          </View>
+        ) : null}
+
+        <View
+          accessibilityLabel={t('onboarding.budget.q14.a11y.previewAmount', {
+            frequency: t(`onboarding.budget.q14.previewLabel.${budgetDisplayFrequency}`),
+          })}
+          style={{
+          marginBottom: 20,
+          padding: 20,
+          borderRadius: R.card,
+          backgroundColor: C.surface,
+          borderWidth: 1,
+          borderColor: C.border,
+        }}>
+          <FrequencyPills
+            options={['daily', 'weekly', 'monthly']}
+            value={budgetDisplayFrequency}
+            onChange={setBudgetDisplayFrequency}
+            label={t('onboarding.budget.q14.displayFrequencyLabel')}
+            small
+            containerStyle={{ marginBottom: 16 }}
+          />
+
+          {liveFlexibleMonthly > 0 ? (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ ...T.fieldLabel, marginBottom: 6 }}>
+                {t('onboarding.budget.q14.splitSlider.label')}
+              </Text>
+              <Text style={{ ...T.caption, color: C.muted, marginBottom: 12 }}>
+                {t('onboarding.budget.q14.splitSlider.helper')}
+              </Text>
+              <BudgetSplitSlider
+                value={budgetSpendingRatio}
+                onChange={setBudgetSpendingRatio}
+                totalAvailable={liveFlexibleMonthly}
+              />
+              {savingsShift > 0 ? (
+                <Text style={{ ...T.caption, color: C.muted, marginTop: 10 }}>
+                  {t('onboarding.budget.q14.splitSlider.summary', {
+                    spend: formatCurrency(effectiveMonthly, currency),
+                    savings: formatCurrency(savingsShift, currency),
+                  })}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          <Text style={{
+            fontSize: layout.previewFontSize,
+            fontWeight: '700',
+            color: effectiveMonthly >= 0 ? C.primary : C.danger,
+            ...tabularNums,
+          }}>
+            {formatCurrency(previewAmount, currency)}
+          </Text>
+          <Text style={{ ...T.helper, color: C.muted, marginTop: 12 }}>
+            {t('onboarding.budget.q14.displayHelper')}
+          </Text>
+          {hasSavingsGoal && deductSavingsGoal ? (
+            <Text style={{ ...T.helper, color: C.muted, marginTop: 8 }}>
+              {t('onboarding.budget.q14.deductSavingsGoal.previewNote', {
+                deduction: formatCurrency(monthlySavingsRequired, currency),
+                amount: formatCurrency(effectiveMonthly, currency),
+              })}
+            </Text>
+          ) : null}
+        </View>
+
+        <BudgetExportBar
+          onExportCsv={handleExportCsv}
+          onExportXlsx={handleExportXlsx}
+          onExportPdf={handleExportPdf}
+        />
       </View>
     );
   };
 
   const renderQ14a = () => (
     <View>
-      <Text style={{ ...T.helper, color: C.muted, marginBottom: 20 }}>
-        {t('onboarding.budget.q14a.helper')}
-      </Text>
-
       <OptionCard
         icon="♾️"
         label={t('onboarding.budget.q14a.free')}
+        subtitle={t('onboarding.budget.q14a.freeDesc')}
         selected={rolloverStrategy === 'free'}
         onPress={() => { setRolloverStrategy('free'); setValidationError(''); }}
       />
       <OptionCard
         icon="🎯"
         label={t('onboarding.budget.q14a.capped')}
+        subtitle={t('onboarding.budget.q14a.cappedDesc')}
         selected={rolloverStrategy === 'capped'}
-        onPress={() => { setRolloverStrategy('capped'); setValidationError(''); }}
+        onPress={() => {
+          setRolloverStrategy('capped');
+          setValidationError('');
+          if (!rolloverMultiplier) setRolloverMultiplier(2);
+        }}
       />
       <OptionCard
         icon="🔁"
         label={t('onboarding.budget.q14a.reset')}
+        subtitle={t('onboarding.budget.q14a.resetDesc')}
         selected={rolloverStrategy === 'reset'}
         onPress={() => { setRolloverStrategy('reset'); setValidationError(''); }}
       />
 
       <AnimatedSlideIn visible={rolloverStrategy === 'capped'}>
-        <Text style={{ ...T.fieldLabel, color: C.muted, marginTop: 16, marginBottom: S.labelGap }}>
-          {t('onboarding.budget.q14a.multiplierLabel')}
+        <Text style={{ ...T.fieldLabel, color: C.muted, marginTop: 8, marginBottom: 8 }}>
+          {t('onboarding.budget.q14a.capTypeLabel')}
         </Text>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          {[2, 3, 4].map(m => (
-            <Pressable
-              key={m}
-              onPress={() => setRolloverMultiplier(m)}
-              style={({ pressed }) => ({
-                flex: 1,
-                paddingVertical: S.pillPadV,
-                borderRadius: R.input,
-                borderWidth: 1.5,
-                borderColor: rolloverMultiplier === m ? C.primary : C.border,
-                backgroundColor: rolloverMultiplier === m ? C.chipSelectedBg : C.surface,
-                alignItems: 'center',
-              })}
-            >
-              <Text style={{ fontSize: 16, fontWeight: '600', color: rolloverMultiplier === m ? C.primary : C.text }}>
-                ×{m}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <OptionCard
+          label={t('onboarding.budget.q14a.capTypeMultiplier')}
+          subtitle={t('onboarding.budget.q14a.capTypeMultiplierHelper')}
+          selected={rolloverCapType === 'multiplier'}
+          onPress={() => setRolloverCapType('multiplier')}
+        />
+        <OptionCard
+          label={t('onboarding.budget.q14a.capTypeAmount')}
+          subtitle={t('onboarding.budget.q14a.capTypeAmountHelper')}
+          selected={rolloverCapType === 'amount'}
+          onPress={() => setRolloverCapType('amount')}
+        />
+
+        <AnimatedSlideIn visible={rolloverCapType === 'multiplier'}>
+          <Text style={{ ...T.fieldLabel, color: C.muted, marginTop: 8, marginBottom: S.labelGap }}>
+            {t('onboarding.budget.q14a.multiplierLabel')}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[2, 3, 4].map((m) => (
+              <Pressable
+                key={m}
+                onPress={() => setRolloverMultiplier(m)}
+                accessibilityRole="button"
+                accessibilityLabel={t(`onboarding.budget.q14a.multiplier${m}`)}
+                accessibilityState={{ selected: rolloverMultiplier === m }}
+                style={{
+                  minHeight: 44,
+                  flex: 1,
+                  paddingVertical: S.pillPadV,
+                  borderRadius: R.input,
+                  borderWidth: 1.5,
+                  borderColor: rolloverMultiplier === m ? C.primary : C.border,
+                  backgroundColor: rolloverMultiplier === m ? C.chipSelectedBg : C.surface,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: '600', color: rolloverMultiplier === m ? C.primary : C.text }}>
+                  ×{m}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </AnimatedSlideIn>
+
+        <AnimatedSlideIn visible={rolloverCapType === 'amount'}>
+          <InputGroup label={t('onboarding.budget.q14a.customCapLabel')} style={{ marginTop: 12 }}>
+            <LabeledInput
+              value={rolloverCapAmount}
+              onChangeText={(v) => setRolloverCapAmount(v.replace(/[^0-9]/g, ''))}
+              numeric
+              placeholder={t('onboarding.budget.q14a.customCapPlaceholder')}
+              large
+              inGroup
+              currency={currency}
+            />
+          </InputGroup>
+        </AnimatedSlideIn>
+      </AnimatedSlideIn>
+
+      <AnimatedSlideIn visible={rolloverStrategy === 'reset'}>
+        <Text style={{ ...T.fieldLabel, color: C.muted, marginTop: 8, marginBottom: 8 }}>
+          {t('onboarding.budget.q14a.resetDestinationLabel')}
+        </Text>
+        <Text style={{ ...T.caption, color: C.muted, marginBottom: 12 }}>
+          {t('onboarding.budget.q14a.resetDestinationHelper')}
+        </Text>
+        {[
+          { key: 'looseMoney', label: 'resetLooseMoney', helper: 'resetLooseMoneyHelper' },
+          { key: 'savings', label: 'resetToSavings', helper: 'resetToSavingsHelper' },
+          { key: 'otherGoal', label: 'resetToOtherGoal', helper: 'resetToOtherGoalHelper' },
+        ].map((opt) => (
+          <OptionCard
+            key={opt.key}
+            label={t(`onboarding.budget.q14a.${opt.label}`)}
+            subtitle={t(`onboarding.budget.q14a.${opt.helper}`)}
+            selected={resetUnspentDestination === opt.key}
+            onPress={() => {
+              setResetUnspentDestination(opt.key);
+              setValidationError('');
+            }}
+          />
+        ))}
+        <AnimatedSlideIn visible={resetUnspentDestination === 'otherGoal'}>
+          <LabeledInput
+            label={t('onboarding.budget.q14a.otherGoalLabel')}
+            value={resetOtherGoalNote}
+            onChangeText={setResetOtherGoalNote}
+            placeholder={t('onboarding.budget.q14a.otherGoalPlaceholder')}
+            containerStyle={{ marginTop: 4 }}
+          />
+        </AnimatedSlideIn>
       </AnimatedSlideIn>
     </View>
   );
@@ -862,12 +1170,12 @@ export default function BudgetScreen() {
       animationKey={step}
       chapter={t('onboarding.budget.chapter')}
       title={stepTitles[step]}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
       onBack={handleBack}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      continueDisabled={step === 'q14' && (dataLoading || !!dataError)}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
     >
       {step === 'q14' && renderQ14()}
       {step === 'q14a' && renderQ14a()}

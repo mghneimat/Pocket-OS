@@ -24,7 +24,7 @@ export default function PillToggle({
   paddingVertical = 14,
   paddingHorizontal = 20,
   fontSize = 13,
-  fontWeight = '600',
+  fontWeight = '500',
   darker = false,
   borderRadius = 0,
 }) {
@@ -47,12 +47,16 @@ export default function PillToggle({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
       style={{
         flex: 1,
+        minHeight: 44,
         paddingVertical,
         paddingHorizontal,
         borderRadius,

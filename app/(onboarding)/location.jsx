@@ -5,7 +5,9 @@ import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
+import LabeledInput from '../../components/onboarding/LabeledInput';
+import { getCurrencySymbol } from '../../lib/currency';
+import { C, T, R, S } from '../../constants/onboarding-theme';
 
 /** @type {Array<{ code: string, name: string, currency: string, region: string }>} */
 const COUNTRIES = [
@@ -163,15 +165,15 @@ export default function LocationScreen() {
     : '';
 
   const inputBase = {
-    backgroundColor: '#FDFCFA',
-    borderWidth: 1.5,
-    borderColor: '#E4E2DC',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#1A1A1A',
+    backgroundColor: C.surface,
+    borderWidth: 2.5,
+    borderColor: C.border,
+    borderRadius: R.input,
+    paddingHorizontal: S.inputPadH,
+    paddingVertical: S.inputPadV,
+    color: C.text,
     fontSize: 17,
-    fontWeight: '300',
+    fontWeight: '400',
   };
 
   return (
@@ -179,15 +181,12 @@ export default function LocationScreen() {
       chapter={t('onboarding.location.chapter')}
       title={t('onboarding.location.title')}
       helper={t('onboarding.location.helper')}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
       onBack={() => router.replace('/(onboarding)/splash-location')}
       validationError={validationError}
-      progress={20}
-      progressLabel={t('onboarding.progress', { percent: '20' })}
-    >
+      progress={20}    >
       {/* Country dropdown trigger */}
-      <Text style={{ fontSize: 13, fontWeight: '500', color: '#7A7770', marginBottom: 6 }}>
+      <Text style={{ ...T.fieldLabel, marginBottom: S.labelGap }}>
         {t('onboarding.location.countryLabel')}
       </Text>
       <Pressable
@@ -203,11 +202,11 @@ export default function LocationScreen() {
         <Text style={{
           fontSize: 17,
           fontWeight: selectedCountry ? '400' : '300',
-          color: selectedCountry ? '#1A1A1A' : '#C4C2BC',
+          color: selectedCountry ? C.text : C.placeholder,
         }}>
           {selectedCountry ? `${getFlagEmoji(selectedCountry.code)} ${countryLabel}` : t('onboarding.location.countryPlaceholder')}
         </Text>
-        <Text style={{ fontSize: 14, color: '#7A7770' }}>{'▼'}</Text>
+        <Text style={{ fontSize: 14, color: C.muted }}>{'▼'}</Text>
       </Pressable>
 
       {/* Country dropdown modal */}
@@ -219,8 +218,8 @@ export default function LocationScreen() {
           <Pressable
             onPress={() => {}}
             style={{
-              backgroundColor: '#FDFCFA',
-              borderRadius: 14,
+              backgroundColor: C.surface,
+              borderRadius: R.card,
               maxHeight: 480,
               width: '100%',
               maxWidth: 520,
@@ -233,20 +232,20 @@ export default function LocationScreen() {
               paddingHorizontal: 16,
               paddingVertical: 12,
               borderBottomWidth: 1,
-              borderBottomColor: '#E4E2DC',
+              borderBottomColor: C.border,
             }}>
               <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 placeholder={t('onboarding.location.countryPlaceholder')}
-                placeholderTextColor={'#C4C2BC'}
+                placeholderTextColor={C.placeholder}
                 style={{
                   fontSize: 16,
                   paddingVertical: 10,
                   paddingHorizontal: 14,
-                  backgroundColor: '#F4F3EF',
+                  backgroundColor: C.bg,
                   borderRadius: 8,
-                  color: '#1A1A1A',
+                  color: C.text,
                 }}
                 autoFocus
               />
@@ -267,32 +266,32 @@ export default function LocationScreen() {
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      backgroundColor: isSelected ? 'rgba(29,53,87,0.05)' : 'transparent',
+                      backgroundColor: isSelected ? C.overlayHover : 'transparent',
                       borderBottomWidth: 0.5,
-                      borderBottomColor: '#F4F3EF',
+                      borderBottomColor: C.bg,
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                       <Text style={{
                         fontSize: 16,
-                        color: isSelected ? '#1D3557' : '#1A1A1A',
+                        color: isSelected ? C.primary : C.text,
                         fontWeight: isSelected ? '500' : '400',
                       }}>
                         {label}
                       </Text>
-                      <Text style={{ fontSize: 12, color: '#C4C2BC', marginLeft: 8 }}>
-                        {country.currency}
+                      <Text style={{ fontSize: 12, color: C.placeholder, marginLeft: 8 }}>
+                        {getCurrencySymbol(country.currency)}
                       </Text>
                     </View>
                     {isSelected ? (
-                      <Text style={{ color: '#1D3557', fontSize: 14 }}>{'✓'}</Text>
+                      <Text style={{ color: C.primary, fontSize: 14 }}>{'✓'}</Text>
                     ) : null}
                   </Pressable>
                 );
               })}
               {filteredCountries.length === 0 ? (
                 <View style={{ padding: 20, alignItems: 'center' }}>
-                  <Text style={{ color: '#C4C2BC', fontSize: 14 }}>No countries found</Text>
+                  <Text style={{ color: C.placeholder, fontSize: 14 }}>{t('onboarding.location.noCountriesFound')}</Text>
                 </View>
               ) : null}
             </ScrollView>
@@ -300,24 +299,17 @@ export default function LocationScreen() {
         </Pressable>
       </Modal>
 
-      {/* City / Region */}
-      <Text style={{ fontSize: 13, fontWeight: '500', color: '#7A7770', marginBottom: 6 }}>
-        {t('onboarding.location.cityLabel')}
-      </Text>
-      <TextInput
+      <LabeledInput
+        label={t('onboarding.location.cityLabel')}
+        optional
         value={city}
         onChangeText={setCity}
         placeholder={t('onboarding.location.cityPlaceholder')}
-        placeholderTextColor={'#C4C2BC'}
-        style={{
-          ...inputBase,
-          marginBottom: 20,
-        }}
         maxLength={60}
       />
 
       {/* Currency dropdown */}
-      <Text style={{ fontSize: 13, fontWeight: '500', color: '#7A7770', marginBottom: 6 }}>
+      <Text style={{ ...T.fieldLabel, marginBottom: S.labelGap }}>
         {t('onboarding.location.currencyLabel')}
       </Text>
       <Pressable
@@ -332,11 +324,11 @@ export default function LocationScreen() {
         <Text style={{
           fontSize: 17,
           fontWeight: '400',
-          color: currency ? '#1A1A1A' : '#C4C2BC',
+          color: currency ? C.text : C.placeholder,
         }}>
-          {currency || 'Select currency'}
+          {currency ? getCurrencySymbol(currency) : t('onboarding.location.currencyPlaceholder')}
         </Text>
-        <Text style={{ fontSize: 14, color: '#7A7770' }}>{'▼'}</Text>
+        <Text style={{ fontSize: 14, color: C.muted }}>{'▼'}</Text>
       </Pressable>
 
       {/* Currency dropdown modal */}
@@ -348,8 +340,8 @@ export default function LocationScreen() {
           <Pressable
             onPress={() => {}}
             style={{
-              backgroundColor: '#FDFCFA',
-              borderRadius: 14,
+              backgroundColor: C.surface,
+              borderRadius: R.card,
               maxHeight: 400,
               width: '100%',
               maxWidth: 520,
@@ -374,25 +366,25 @@ export default function LocationScreen() {
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      backgroundColor: isSelected ? 'rgba(29,53,87,0.05)' : 'transparent',
+                      backgroundColor: isSelected ? C.overlayHover : 'transparent',
                       borderBottomWidth: 0.5,
-                      borderBottomColor: '#F4F3EF',
+                      borderBottomColor: C.bg,
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                       <Text style={{
                         fontSize: 16,
-                        color: isSelected ? '#1D3557' : '#1A1A1A',
+                        color: isSelected ? C.primary : C.text,
                         fontWeight: isSelected ? '500' : '400',
                       }}>
-                        {item.code}
+                        {item.symbol}
                       </Text>
-                      <Text style={{ fontSize: 13, color: '#C4C2BC', marginLeft: 8 }}>
-                        {item.name} ({item.symbol})
+                      <Text style={{ fontSize: 13, color: C.placeholder, marginLeft: 8 }}>
+                        {item.name} ({item.code})
                       </Text>
                     </View>
                     {isSelected ? (
-                      <Text style={{ color: '#1D3557', fontSize: 14 }}>{'✓'}</Text>
+                      <Text style={{ color: C.primary, fontSize: 14 }}>{'✓'}</Text>
                     ) : null}
                   </Pressable>
                 );

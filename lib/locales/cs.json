@@ -1,8 +1,19 @@
 {
   "app": {
-    "name": "PocketOS",
-    "tagline": "Tvoje kapsa. Vylepšená.",
-    "description": "Chytrý nástroj pro domácí rozpočet, který vám pomůže sledovat příjmy, spravovat náklady a převzít kontrolu nad svými financemi — vše na jednom místě."
+    "name": "Bida",
+    "tagline": "Patron vaší peněženky",
+    "fullTitle": "Bida – Patron vaší peněženky",
+    "description": "Domácí rozpočet na jednom místě. Příjmy, náklady a kolik vám zbývá na útratu.",
+    "sidebar": {
+      "navigation": "Navigace",
+      "tools": "Nástroje",
+      "planLabel": "Domácí rozpočet",
+      "languageMenu": "Vyberte jazyk",
+      "languageRow": "{{language}}",
+      "collapse": "Sbalit postranní panel",
+      "expand": "Rozbalit postranní panel",
+      "retakeQuestionnaire": "Znovu vyplnit dotazník"
+    }
   },
   "common": {
     "continue": "Pokračovat",
@@ -15,6 +26,8 @@
     "delete": "Smazat",
     "add": "Přidat",
     "loading": "Načítání...",
+    "saving": "Ukládání...",
+    "retry": "Zkusit znovu",
     "error": "Něco se pokazilo",
     "yes": "Ano",
     "no": "Ne",
@@ -22,6 +35,7 @@
     "language": "Jazyk",
     "daily": "Denně",
     "weekly": "Týdně",
+    "fortnightly": "14denně",
     "monthly": "Měsíčně",
     "quarterly": "Čtvrtletně",
     "annual": "Ročně",
@@ -30,7 +44,10 @@
     "datePicker": {
       "day": "Den",
       "month": "Měsíc",
-      "year": "Rok"
+      "year": "Rok",
+      "placeholderFull": "DD/MM/RRRR",
+      "placeholderMonthYear": "MM/RRRR",
+      "hint": "Zadejte datum nebo vyberte návrh"
     },
     "months": {
       "january": "Leden",
@@ -49,9 +66,9 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "PocketOS",
-      "subtitle": "Vaše domácí finance, konečně jasné.",
-      "cta": "Začít"
+      "title": "Bida",
+      "subtitle": "Patron vaší peněženky",
+      "cta": "Začněte hned"
     },
     "consent": {
       "title": "Vaše data, vaše soukromí",
@@ -71,6 +88,7 @@
       "partnerName": {
         "title": "Jak máme oslovovat vašeho partnera?",
         "helper": "Používá se pouze k personalizaci štítků jako 'Příjem Sáry'. Nic víc.",
+        "label": "Jméno partnera",
         "placeholder": "Jméno partnera",
         "validation": "Prosím zadejte jméno partnera"
       },
@@ -111,6 +129,8 @@
       "cityLabel": "Město / Region (volitelné)",
       "cityPlaceholder": "např. Praha",
       "currencyLabel": "Měna",
+      "currencyPlaceholder": "Vyberte měnu",
+      "noCountriesFound": "Žádné země nenalezeny",
       "validation": "Prosím vyberte zemi"
     },
     "occupation": {
@@ -121,6 +141,7 @@
       "student": "Student",
       "notWorking": "Momentálně nepracuji",
       "other": "Jiné",
+      "otherLabel": "Upřesněte prosím",
       "otherPlaceholder": "Stručně nám to popište (volitelné)",
       "validation": "Prosím vyberte povolání",
       "partnerTitle": "Jaká je pracovní situace {{name}}?",
@@ -155,11 +176,15 @@
       "q5a": {
         "title": "Jaký je měsíční čistý příjem {{name}}?",
         "helper": "Čistá částka po zdanění.",
+        "amountLabel": "Měsíční čistý příjem",
         "validation": "Prosím zadejte příjem {{name}}"
       },
       "q5b": {
         "title": "Máte nějaké další zdroje příjmů?",
         "helper": "Pronájmy, dividendy, finanční podpora — cokoli pravidelného.",
+        "helperRequired": "Vy ani váš partner nemáte zadaný příjem ze zaměstnání. Přidejte alespoň jeden pravidelný zdroj příjmu, abychom mohli sestavit váš rozpočet.",
+        "helperRequiredSolo": "Nemáte zadaný příjem ze zaměstnání. Přidejte alespoň jeden pravidelný zdroj příjmu, abychom mohli sestavit váš rozpočet.",
+        "requiredNote": "Pro pokračování je nutný alespoň jeden zdroj příjmu.",
         "yes": "Ano",
         "no": "Ne",
         "amountLabel": "Částka",
@@ -167,27 +192,48 @@
         "frequencyLabel": "Frekvence",
         "descriptionLabel": "Popis",
         "labelPlaceholder": "Popisek (volitelný)",
-        "addAnother": "Přidat další zdroj"
+        "addAnother": "Přidat další zdroj",
+        "validationNoIncome": "Bez příjmu nemůžeme sestavit rozpočet. Vyberte Ano a zadejte alespoň jeden pravidelný zdroj — například dávky, příjem z pronájmu nebo finanční podporu — nebo se vraťte zpět a zadejte plat {{name}} nebo svůj vlastní příjem.",
+        "validationNoIncomeSolo": "Bez příjmu nemůžeme sestavit rozpočet. Vyberte Ano a zadejte alespoň jeden pravidelný zdroj — například dávky, příjem z pronájmu nebo finanční podporu.",
+        "validationOtherAmount": "Prosím zadejte částku alespoň u jednoho zdroje příjmu."
       },
       "q5c": {
         "title": "Máte úspory?",
-        "helper": "Váš zůstatek ukazuje, kolik měsíců výdajů máte pokryto. Měsíční cíl je považován za závaznou položku rozpočtu.",
+        "helper": "Váš zůstatek ukazuje, kolik měsíců výdajů máte pokryto.",
         "balanceLabel": "Aktuální zůstatek úspor",
-        "balancePlaceholder": "např. 50 000",
-        "monthlyTargetLabel": "Měsíční cíl úspor",
-        "monthlyTargetPlaceholder": "např. 2 000"
+        "balancePlaceholder": "např. 50 000"
       },
       "q5d": {
-        "title": "Máte finanční cíl?",
-        "helper": "Cílová částka a datum — dovolená, auto, svatba, rezervní fond. AI to zohlední ve svých radách.",
-        "yes": "Ano",
-        "no": "Ne",
-        "descriptionLabel": "Popis cíle (volitelný)",
-        "descriptionPlaceholder": "např. Dovolená v Thajsku",
+        "title": "Jaký je váš finanční cíl?",
+        "helper": "Vyberte, na co se má Bida zaměřit.",
+        "typeReduceCosts": "Snížit náklady",
+        "typeReduceCostsDesc": "Omezit výdaje a najít úspory v rozpočtu",
+        "typeSaveMoney": "Šetřit peníze",
+        "typeSaveMoneyDesc": "Budovat úspory na konkrétní cíl nebo každý měsíc",
+        "typeReduceAndSave": "Snížit náklady a šetřit",
+        "typeReduceAndSaveDesc": "Utrácet méně a rozdíl odkládat stranou",
+        "saveModeTitle": "Jak chcete šetřit?",
+        "saveModeHelper": "Vyberte, zda šetříte na konkrétní cíl, nebo pravidelnou měsíční částku.",
+        "saveModeTarget": "Šetřit na konkrétní částku",
+        "saveModeTargetDesc": "např. 250 000 Kč na auto do cílového data",
+        "saveModeOngoing": "Pravidelné měsíční spoření",
+        "saveModeOngoingDesc": "Odkládat pevnou částku každý měsíc bez konce",
+        "targetTitle": "Váš spořicí cíl",
+        "targetHelper": "Zadejte, na co šetříte, kolik potřebujete a kdy chcete cíle dosáhnout.",
+        "ongoingTitle": "Vaše měsíční spoření",
+        "ongoingHelper": "Kolik chcete odkládat každý měsíc?",
+        "descriptionLabel": "Popis cíle",
+        "descriptionPlaceholder": "např. Nákup auta",
         "amountLabel": "Cílová částka",
         "amountPlaceholder": "např. 100 000",
         "dateLabel": "Cílové datum",
-        "validation": "Prosím zadejte cílovou částku"
+        "monthlyTargetLabel": "Měsíční cíl úspor",
+        "monthlyTargetPlaceholder": "např. 2 000",
+        "validationType": "Prosím vyberte svůj finanční cíl",
+        "validationSaveMode": "Prosím vyberte, jak chcete šetřit",
+        "validationTargetAmount": "Prosím zadejte cílovou částku",
+        "validationTargetDate": "Prosím vyberte cílové datum",
+        "validationOngoingAmount": "Prosím zadejte měsíční cíl úspor"
       }
     },
     "s4": {
@@ -208,19 +254,37 @@
       "q6a": {
         "title": "Kolik platíte měsíčně za nájem?",
         "helper": "Pokud máte energie zahrnuté v nájmu a znáte částku, zadejte pouze základní nájem — energie zadáte v dalším kroku. Pokud neznáte rozdělení (kolej, vše v ceně, atd.), zadejte celkovou částku a energie přeskočte.",
+        "amountLabel": "Měsíční nájem",
         "validation": "Prosím zadejte měsíční nájem"
       },
       "q6b": {
         "title": "Kolik platíte za energie?",
         "helper": "Plyn, elektřina, voda — dohromady. Stačí odhad. Přeskočte, pokud nevíte nebo nechcete oddělovat.",
-        "skip": "Přeskočit — nevím nebo je to v nájmu"
+        "skip": "Přeskočit — nevím nebo je to v nájmu",
+        "modeTotal": "Jedna souhrnná částka",
+        "modeItemized": "Rozpis po energiích",
+        "modeLabel": "Jak chcete zadat energie?",
+        "amountLabel": "Měsíční součet energií",
+        "utilityWater": "Voda",
+        "utilityHotWater": "Teplá voda",
+        "utilityHeating": "Topení",
+        "utilityElectricity": "Elektřina",
+        "utilityGas": "Plyn",
+        "utilitySewer": "Kanalizace",
+        "utilityGarbage": "Svoz odpadu",
+        "addOtherUtility": "Přidat jinou energii",
+        "otherUtilityLabel": "Jiná energie",
+        "otherUtilityPlaceholder": "např. společné prostory",
+        "otherUtilityAmount": "Částka",
+        "utilitiesSum": "Celkem: {{amount}}"
       },
       "q6c": {
         "title": "Platíte internet zvlášť?",
         "helper": "Přeskočte, pokud je internet zahrnut v nájmu nebo energiích.",
         "no": "Ne / V ceně",
         "yes": "Ano",
-        "amountPlaceholder": "Částka",
+        "amountLabel": "Náklady na internet",
+        "amountPlaceholder": "0",
         "frequencyMonthly": "Měsíčně",
         "frequencyAnnual": "Ročně",
         "validation": "Prosím zadejte částku za internet"
@@ -245,7 +309,8 @@
         "helper": "Fond oprav, pojištění nemovitosti, služby, daň z nemovitosti — cokoli pravidelného.",
         "yes": "Ano",
         "no": "Ne",
-        "amountPlaceholder": "Částka",
+        "amountLabel": "Částka",
+        "amountPlaceholder": "0",
         "descriptionPlaceholder": "Popis (volitelný)",
         "dueDateLabel": "Datum splatnosti",
         "dueDatePlaceholder": "Datum splatnosti (volitelné)",
@@ -256,7 +321,8 @@
         "helper": "Příspěvky na nájem, potraviny, účty — přidejte jakoukoli pravidelnou podporu.",
         "yes": "Ano",
         "no": "Ne",
-        "amountPlaceholder": "Částka",
+        "amountLabel": "Částka",
+        "amountPlaceholder": "0",
         "descriptionPlaceholder": "Popis (volitelný)",
         "dueDateLabel": "Datum splatnosti",
         "dueDatePlaceholder": "Datum splatnosti (volitelné)",
@@ -266,14 +332,27 @@
         "title": "Státní a městské poplatky",
         "helper": "Většina domácností platí fixní zákonné poplatky. Předvyplnili jsme ty nejběžnější — potvrďte nebo upravte.",
         "wasteTax": "Poplatek za odpad",
-        "wasteTaxNote": "1 080 Kč/rok — svoz komunálního odpadu",
+        "wasteTaxNote": "{{amount}}/rok — svoz komunálního odpadu",
+        "wasteTaxNoteEstimated": "{{amount}}/rok — odhad pro {{summary}}. Pravidla se liší podle obce; upravte, pokud se liší vaše sazba.",
+        "wasteTaxSummaryOneAdult": "1 dospělého",
+        "wasteTaxSummaryAdults": "{{count}} dospělých",
+        "wasteTaxSummaryChildFull": "1 dítě v plné sazbě",
+        "wasteTaxSummaryChildrenFull": "{{count}} dětí v plné sazbě",
+        "wasteTaxSummaryChildReduced": "1 dítě ve snížené sazbě",
+        "wasteTaxSummaryChildrenReduced": "{{count}} dětí ve snížené sazbě",
+        "wasteTaxSummaryChildExempt": "1 dítě osvobozeno",
+        "wasteTaxSummaryChildrenExempt": "{{count}} dětí osvobozeno",
         "tvLicence": "Televizní poplatek",
         "tvLicenceNote": "1 620 Kč/rok — Česká televize",
         "radioLicence": "Rozhlasový poplatek",
         "radioLicenceNote": "540 Kč/rok — Český rozhlas",
         "addCustom": "Přidat vlastní položku",
         "customPlaceholder": "Název položky",
-        "customAmountPlaceholder": "Částka",
+        "customAmountLabel": "Částka",
+        "customAmountPlaceholder": "0",
+        "dontPayWasteTax": "Neplatím poplatek za odpad",
+        "dontPayTvLicence": "Neplatím televizní poplatek",
+        "dontPayRadioLicence": "Neplatím rozhlasový poplatek",
         "frequencyMonthly": "Měsíčně",
         "frequencyAnnual": "Ročně"
       }
@@ -350,7 +429,8 @@
         "motPlaceholder": "MM/RRRR",
         "maintenanceLabel": "Plánované položky údržby",
         "maintenanceDescPlaceholder": "Co je potřeba udělat?",
-        "maintenanceCostPlaceholder": "Cena",
+        "maintenanceCostLabel": "Odhadovaná cena",
+        "maintenanceCostPlaceholder": "0",
         "maintenanceDateLabel": "Datum",
         "maintenanceDatePlaceholder": "Datum (volitelné)",
         "addItem": "Přidat položku",
@@ -361,7 +441,8 @@
         "helper": "Přidejte plánovanou údržbu nebo opravy kola, na které šetříte — například nový řetěz, brzdové destičky nebo oprava pneumatiky.",
         "maintenanceLabel": "Plánované položky údržby",
         "maintenanceDescPlaceholder": "Co je potřeba udělat?",
-        "maintenanceCostPlaceholder": "Cena",
+        "maintenanceCostLabel": "Odhadovaná cena",
+        "maintenanceCostPlaceholder": "0",
         "maintenanceDateLabel": "Datum",
         "maintenanceDatePlaceholder": "Datum (volitelné)",
         "addItem": "Přidat položku",
@@ -399,7 +480,7 @@
       "confirmed": "Potvrzeno",
       "coverageType": "Typ pojištění",
       "payPrivately": "Platit soukromě",
-      "premiumLabel": "Měsíční pojistné",
+      "premiumLabel": "Pojistné",
       "premiumPlaceholder": "např. 2 360",
       "premiumRequired": "Prosím zadejte částku pojistného",
       "frequencyLabel": "Frekvence",
@@ -412,6 +493,31 @@
       "notesPlaceholder": "např. Dodatečné soukromé pojištění",
       "customFrequencyLabel": "Kolik měsíců?",
       "customFrequencyPlaceholder": "např. 3",
+      "fixedEndDateLabel": "Datum konce smlouvy",
+      "renewalPlanLabel": "Co plánujete po skončení této smlouvy?",
+      "renewalRenew": "Obnovit stejné pojištění",
+      "renewalRenewHelper": "Stejné krytí, stejné období smlouvy a stejné celkové pojistné — pomůžeme vám na platbu šetřit.",
+      "premiumPaidInFullLabel": "Bylo toto období smlouvy zaplaceno najednou předem?",
+      "premiumPaidInFullHelper": "Pokud jste celé pojistné zaplatili před datem začátku, nebudeme ho teď počítat jako měsíční náklad — místo toho vám pomůžeme šetřit na obnovu.",
+      "renewReserveSummary": "Odložte {{amount}} měsíčně po dobu {{months}} měsíců, abyste pokryli {{total}} při obnově.",
+      "renewReserveExplain": "Aktuální období je již zaplacené. Tato měsíční rezerva se postupně skládá na další platbu.",
+      "renewReserveTightWarning": "Obnova je za pouhých {{months}} měsíců a pravděpodobně nemáte dostatek úspor (chybí přibližně {{shortfall}}). Pokud je navrhovaná částka příliš vysoká, můžete zvolit nižší měsíční částku.",
+      "budgetForRenewLabel": "Zahrnout tuto měsíční rezervu do rozpočtu?",
+      "budgetForRenewHelper": "Tuto částku budeme odečítat z vašeho denního kapesného do konce smlouvy.",
+      "renewUseSuggested": "Použít navrhovanou částku ({{amount}}/měsíc)",
+      "renewUseCustom": "Nastavit nižší měsíční částku",
+      "renewUseCustomHelper": "Zvolte tuto možnost, pokud je navrhovaná částka pro váš rozpočet příliš vysoká.",
+      "renewCustomMonthlyLabel": "Vaše měsíční rezerva",
+      "renewCustomMonthlyPlaceholder": "např. 1 500",
+      "renewalSwitch": "Přejít na jiný tarif",
+      "renewalSwitchHelper": "Jiné krytí, frekvence plateb nebo cena po skončení smlouvy — zadejte svůj nejlepší odhad.",
+      "renewalEnd": "Pojištění ukončit",
+      "renewalEndHelper": "Po vypršení smlouvy neplánujete pokračovat.",
+      "switchPlanIntro": "Odhadněte, kolik zaplatíte za novou smlouvu. Cena se může do podpisu změnit — údaj můžete později upravit.",
+      "switchPremiumLabel": "Očekávané pojistné při obnově",
+      "switchPremiumPlaceholder": "např. 12 000",
+      "switchPremiumHelper": "Celková částka, kterou podle vás zaplatíte při začátku nové smlouvy (za období uvedené níže).",
+      "switchPremiumFrequencyHelper": "Jak budete podle vás platit po začátku nové smlouvy. Výši výše rozložíme na měsíce do konce aktuální smlouvy.",
       "validation": "Prosím potvrďte údaje o pojištění tohoto člena",
       "q8": {
         "title": "Zdravotní pojištění pro {{name}}",
@@ -478,7 +584,8 @@
           "savingsHelper": "Měsíční spoření odkládané pro dítě"
         },
         "suggestions": "Návrhy — klepnutím přidáte",
-        "amountPlaceholder": "Částka",
+        "amountLabel": "Částka",
+        "amountPlaceholder": "0",
         "frequencyMonthly": "Měsíčně",
         "frequencyAnnual": "Ročně"
       }
@@ -498,6 +605,7 @@
       },
       "q10a": {
         "heading": "Vaši mazlíčci",
+        "petLabel": "Mazlíček {{n}}",
         "title": "Mazlíček {{n}}",
         "helper": "Zadejte pravidelné náklady.",
         "costsLabel": "Náklady",
@@ -508,6 +616,7 @@
         "other": "Jiné",
         "nameLabel": "Jméno (volitelné)",
         "namePlaceholder": "Jméno mazlíčka",
+        "amountLabel": "Částka",
         "foodLabel": "Krmivo",
         "foodPlaceholder": "např. 800",
         "vetLabel": "Veterinář",
@@ -675,7 +784,7 @@
     },
     "s12": {
       "eyebrow": "Sekce 12 — Rozpočet",
-      "heading": "Rozpočet a strategie",
+      "heading": "Nastavte flexibilní rozpočet",
       "body": "Nyní nastavíme váš flexibilní rozpočet a rozhodneme, jak se nespotřebované peníze převádějí."
     },
     "budget": {
@@ -691,6 +800,7 @@
         "available": "Dostupné pro flexibilní útratu",
         "budgetLabel": "Váš měsíční flexibilní rozpočet",
         "amount": "Částka",
+        "amountsNote": "Všechny částky v {{currency}}",
         "currency": "Měna",
         "incomeUser": "Váš příjem",
         "incomePartner": "Příjem partnera",
@@ -705,34 +815,94 @@
           "other": "Ostatní"
         },
         "placeholder": "např. 15 000",
-        "validation": "Prosím zadejte částku flexibilního rozpočtu"
+        "validation": "Prosím zadejte částku flexibilního rozpočtu",
+        "expandAll": "Rozbalit vše",
+        "collapseAll": "Sbalit vše",
+        "exportLabel": "Export rozpočtu",
+        "exportCsv": "CSV",
+        "exportXlsx": "XLSX",
+        "exportPdf": "PDF",
+        "displayFrequencyLabel": "Jak chcete rozpočet zobrazovat",
+        "displayHelper": "Souhrn zůstává měsíční; náhled používá zvolené období.",
+        "splitSlider": {
+          "label": "Upravit útratu vs. spoření",
+          "helper": "Posuňte doleva pro nižší rozpočet a více měsíčních úspor. Posuňte doprava pro vyšší útratu.",
+          "moreSavings": "Více do úspor",
+          "moreSpending": "Více k útratě",
+          "summary": "{{spend}} k útratě · {{savings}} do úspor",
+          "a11y": "Rozdělení útraty a spoření"
+        },
+        "previewLabel": {
+          "daily": "Za den",
+          "weekly": "Za týden",
+          "monthly": "Za měsíc"
+        },
+        "loading": "Počítáme váš rozpočet...",
+        "loadError": "Nepodařilo se načíst data domácnosti. Zkontrolujte připojení a zkuste to znovu.",
+        "a11y": {
+          "expandAll": "Rozbalit všechny řádky rozpočtu",
+          "collapseAll": "Sbalit všechny řádky rozpočtu",
+          "expandRow": "Rozbalit {{label}}",
+          "collapseRow": "Sbalit {{label}}",
+          "previewAmount": "Náhled rozpočtu, {{frequency}}"
+        },
+        "deductSavingsGoal": {
+          "label": "Odečíst cíl spoření z rozpočtu na útratu?",
+          "helper": "Pokud zapnete, náhled rozpočtu odečte měsíční částku potřebnou k dosažení vašeho cíle spoření.",
+          "yes": "Odečíst z rozpočtu",
+          "no": "Nechat zvlášť",
+          "previewNote": "{{deduction}} rezervováno na cíl · {{amount}} na útratu"
+        }
       },
       "q14a": {
         "title": "Co se stane s nespotřebovaným rozpočtem?",
         "helper": "Vyberte, jak se nespotřebované peníze z flexibilního rozpočtu převádějí do dalšího měsíce.",
         "free": "Volný převod",
-        "freeDesc": "Veškerý nespotřebovaný rozpočet se převádí do dalšího měsíce bez omezení.",
+        "freeDesc": "Nevyužité peníze se přičtou k flexibilnímu rozpočtu příštího měsíce — vaše denní kapesné se zvýší, dokud je nevyčerpáte.",
         "capped": "Omezený převod",
-        "cappedDesc": "Nespotřebovaný rozpočet se převádí až do násobku vašeho měsíčního rozpočtu.",
+        "cappedDesc": "Nespotřebovaný rozpočet se převádí, ale jen do vámi nastaveného limitu — úspory se nehromadí bez omezení.",
         "reset": "Reset každý měsíc",
-        "resetDesc": "Veškerý nespotřebovaný rozpočet propadá na konci každého měsíce.",
+        "resetDesc": "Každý měsíc začínáte znovu. Nespotřebovaný rozpočet se nepřičítá k příštímu měsíčnímu kapesnému.",
+        "capTypeLabel": "Jak omezit převod?",
+        "capTypeMultiplier": "Násobek měsíčního rozpočtu",
+        "capTypeMultiplierHelper": "Např. ×2 znamená, že převod může dosáhnout dvojnásobku měsíčního flexibilního rozpočtu.",
+        "capTypeAmount": "Pevný limit v korunách",
+        "capTypeAmountHelper": "Nastavte maximální zůstatek převodu — např. 5 000 Kč.",
+        "customCapLabel": "Maximální zůstatek převodu",
+        "customCapPlaceholder": "např. 5 000",
         "multiplierLabel": "Limit převodu",
         "multiplier2": "×2 (dva měsíce)",
         "multiplier3": "×3 (tři měsíce)",
         "multiplier4": "×4 (čtyři měsíce)",
-        "validation": "Prosím vyberte strategii převodu"
-      }
+        "resetDestinationLabel": "Kam mají jít nespotřebované peníze?",
+        "resetDestinationHelper": "Na konci měsíce se zbylý flexibilní rozpočet přesměruje do sledovaného zůstatku — aby čísla dávala smysl.",
+        "resetLooseMoney": "Sledovat jako volné peníze",
+        "resetLooseMoneyHelper": "Zbytek se zaznamená jako volné peníze — nepřičte se k příštímu měsíčnímu kapesnému ani k formálním úsporám.",
+        "resetForfeit": "Sledovat jako volné peníze",
+        "resetForfeitHelper": "Zbytek se zaznamená jako volné peníze — nepřičte se k příštímu měsíčnímu kapesnému ani k formálním úsporám.",
+        "resetToSavings": "Přidat do úspor",
+        "resetToSavingsHelper": "Zbylý rozpočet se na konci měsíce přesune do vašeho zůstatku úspor.",
+        "resetToOtherGoal": "Odložit na jiný cíl",
+        "resetToOtherGoalHelper": "Sledujte to zvlášť — např. fond na dovolenou, opravu auta nebo jednorázový nákup.",
+        "otherGoalLabel": "Jaký je tento cíl?",
+        "otherGoalPlaceholder": "např. Fond na letní dovolenou",
+        "validation": "Prosím vyberte strategii převodu",
+        "validationCapMultiplier": "Prosím zvolte násobek převodu",
+        "validationCapAmount": "Prosím zadejte vlastní limit převodu",
+        "validationOtherGoal": "Prosím pojmenujte cíl, na který odkládáte peníze"
+      },
+      "familyContribution": "Příspěvek domácnosti {{n}}"
     },
     "s13": {
       "eyebrow": "Téměř hotovo",
-      "heading": "Revize a potvrzení",
+      "heading": "Zkontrolujte, zda vše sedí",
       "body": "Pojďme zkontrolovat vše, než začneme. Vždy se můžete vrátit a upravit později."
     },
     "review": {
       "chapter": "Revize a potvrzení",
       "q15": {
         "title": "Zkontrolujte své údaje",
-        "helper": "Zkontrolujte, zda vše vypadá správně. Klepnutím na libovolnou sekci ji rozbalíte a zobrazíte podrobnosti.",
+        "helper": "Rozbalte sekci, pokud chcete zkontrolovat podrobnosti.",
         "sections": {
           "household": "Domácnost",
           "location": "Lokace a povolání",
@@ -778,7 +948,9 @@
           "apr": "RPSN",
           "monthlyBudget": "Měsíční flexibilní rozpočet",
           "rollover": "Strategie převodu",
-          "multiplier": "Násobitel převodu"
+          "multiplier": "Násobitel převodu",
+          "rolloverCap": "Limit převodu",
+          "resetDestination": "Nespotřebovaný rozpočet jde do"
         },
         "cta": "Vypadá dobře — přejít na přehled",
         "skip": "Dokončím později"
@@ -787,21 +959,769 @@
     "progress": "{{percent}}% dokončeno"
   },
   "dashboard": {
+    "common": {
+      "export": "Exportovat",
+      "exportTable": "Exportovat tabulku"
+    },
     "title": "Přehled",
     "income": "Příjem",
     "costs": "Náklady",
+    "expenses": "Výdaje",
     "budget": "Rozpočet",
+    "tracker": "Sledování",
     "goals": "Cíle",
+    "savings": "Úspory",
     "alerts": "Upozornění",
     "summary": "Souhrn",
+    "tabRoles": {
+      "dashboard": "Váš dnešní rozpočet na běžné výdaje a co vyžaduje pozornost.",
+      "income": "Příjmy domácnosti a spořicí cíle — částky upravíte přímo v tabulce.",
+      "expenses": "Fixní náklady a splátky dluhů, které jsou každý měsíc zavázané.",
+      "budget": "Kolik zbývá na běžné výdaje po odečtení závazků.",
+      "summary": "Úplná kniha s metrikami zdraví rozpočtu a analýzou po sekcích."
+    },
+    "ledgerStrip": {
+      "income": "Příjem",
+      "committed": "Závazky",
+      "available": "K dispozici",
+      "toSpend": "Na výdaje",
+      "toSpendNote": "{{spend}} z {{available}} k dispozici určeno na běžné výdaje",
+      "a11y": "Měsíční plán: příjem, závazky, k dispozici po závazcích, rozpočet na výdaje",
+      "openIncome": "Otevřít záložku Příjem",
+      "openExpenses": "Otevřít záložku Výdaje",
+      "openBudget": "Otevřít záložku Rozpočet"
+    },
+    "ledgerCascade": {
+      "income": "Příjem",
+      "committed": "Závazky",
+      "committedHint": "Zahrnuje pravidelné platby, předplatná a splátky dluhů",
+      "available": "K dispozici",
+      "saved": "Uloženo",
+      "savedDeducted": "Vyhrazeno z rozpočtu na výdaje",
+      "savedIncluded": "Není odděleno od výdajů — zapněte odečtení v Rozpočtu pro ochranu této částky",
+      "costsReduced": "Snížení nákladů",
+      "costsReducedSince": "Od zahájení sledování",
+      "costsReducedNone": "Zatím bez snížení — upravte výdaje pro nižší závazky",
+      "toSpend": "Na výdaje",
+      "toSpendIncludedGoal": "Tempo spoření je zahrnuto v této částce",
+      "unallocated": "Nealokováno",
+      "a11y": "Měsíční plán: příjem, závazky, k dispozici, spoření, rozpočet na výdaje, volné prostředky",
+      "openIncome": "Otevřít záložku Příjem",
+      "openExpenses": "Otevřít záložku Výdaje",
+      "openBudget": "Otevřít záložku Rozpočet",
+      "openGoals": "Otevřít záložku Cíle"
+    },
+    "saveFeedback": {
+      "updated": "Rozpočet na výdaje je nyní {{amount}} měsíčně ({{delta}})",
+      "unchanged": "Uloženo. Rozpočet na výdaje zůstává {{amount}} měsíčně."
+    },
+    "tabComingSoon": "Tato sekce bude dostupná v budoucí aktualizaci.",
+    "errorBoundary": {
+      "title": "Něco se pokazilo",
+      "body": "Nepodařilo se zobrazit přehled. Zkuste to znovu nebo obnovte aplikaci."
+    },
+    "metricExplain": {
+      "tapHint": "Klepnutím zobrazíte výpočet",
+      "gotIt": "Rozumím",
+      "closeA11y": "Zavřít vysvětlení",
+      "whatItMeans": "Co to znamená",
+      "calculation": "Jak jsme to spočítali",
+      "rows": {
+        "income": "Měsíční příjem",
+        "fixedCosts": "Fixní náklady",
+        "debtPayments": "Splátky dluhů",
+        "available": "Zbývá po fixních nákladech",
+        "flexibleBudget": "Váš flexibilní rozpočet",
+        "spendingBudget": "Zobrazený rozpočet na útratu",
+        "savingsReservation": "Rezervace cíle spoření",
+        "daysInMonth": "Dní v tomto měsíci",
+        "dailyAllowance": "Denní limit",
+        "totalCommitted": "Celkem zavázáno",
+        "fixedLoadPct": "Fixní zátěž",
+        "buffer": "Měsíční rezerva",
+        "recurringTotal": "Pravidelné závazky",
+        "recurringPct": "Podíl z příjmu"
+      },
+      "flexibleBudget": {
+        "title": "Váš rozpočet na výdaje",
+        "meaning": "Peníze zbývající na běžné výdaje po nájmu, účtech a splátkách dluhů. Přepínejte denní, týdenní nebo měsíční zobrazení podle potřeby.",
+        "meaningDeducted": "Váš rozpočet na útratu po rezervaci měsíční částky potřebné k dosažení cíle spoření. Přepínejte denní, týdenní nebo měsíční zobrazení podle potřeby.",
+        "formula": "{{monthly}} ÷ {{days}} dní = {{daily}} za den"
+      },
+      "fixedLoad": {
+        "title": "Fixní zátěž",
+        "meaning": "Ukazuje, kolik z vašeho příjmu je už vázáno fixními náklady a minimálními splátkami dluhů. Nad 80 % je to těsné; nad 100 % závazky převyšují příjem.",
+        "formula": "(Fixní náklady + splátky dluhů) ÷ příjem × 100"
+      },
+      "monthlyBuffer": {
+        "title": "Flexibilita rozpočtu",
+        "meaning": "Hotovost zbývající po vyčlenění rozpočtu na výdaje. Kladná hodnota znamená rezervu; záporná znamená, že rozpočet na výdaje převyšuje skutečně dostupnou částku.",
+        "formula": "Příjem − fixní náklady − splátky dluhů − rozpočet na výdaje"
+      },
+      "recurringCosts": {
+        "title": "Pravidelné náklady",
+        "meaning": "Předplatná, pojistné a minimální splátky dluhů, které se opakují každý měsíc. Tyto náklady můžete zkontrolovat, když chcete uvolnit peníze.",
+        "formula": "Pravidelné závazky ÷ příjem × 100"
+      },
+      "totalIncome": {
+        "title": "Celkový příjem",
+        "meaning": "Součet veškerého příjmu domácnosti přepočtený na měsíční částku — platy, dávky a další pravidelné zdroje zadané při nastavení.",
+        "formula": "Každý zdroj příjmu přepočten na měsíc, poté sečten",
+        "rows": {
+          "total": "Celkový měsíční příjem"
+        }
+      },
+      "totalExpenses": {
+        "title": "Závazné náklady",
+        "meaning": "Fixní náklady domácnosti plus minimální splátky dluhů splatné každý měsíc. Tyto peníze jsou zavázané ještě před běžnými výdaji.",
+        "formula": "Fixní náklady + splátky dluhů",
+        "rows": {
+          "total": "Celkem závazků měsíčně"
+        }
+      },
+      "savingsGoalPlan": {
+        "title": "Spořicí cíl",
+        "targetMeaning": "Částka, kterou chcete naspořit, a termín zadaný při nastavení. Podle toho počítáme měsíční odkládání.",
+        "ongoingMeaning": "Pevná částka, kterou plánujete odkládat každý měsíc bez konce — vhodné pro pravidelné budování úspor.",
+        "noGoalMeaning": "Zatím nemáte nastavený spořicí cíl. Přidejte ho v sekci Příjem, aby se zde zobrazil.",
+        "reduceCostsMeaning": "Váš hlavní cíl je snížit výdaje domácnosti, nikoli spořit konkrétní částku.",
+        "rows": {
+          "goalAmount": "Cílová částka",
+          "deadline": "Cílový termín",
+          "monthlyTarget": "Měsíční částka",
+          "schedule": "Plán"
+        }
+      },
+      "savingsGoal": {
+        "title": "Sledování cíle",
+        "meaning": "Ukazuje, kolik jste již naspořili a kolik musíte odkládat denně, týdně nebo měsíčně, abyste cíle dosáhli včas.",
+        "ongoingMeaning": "Ukazuje celkový zůstatek úspor a kolik pravidelně odkládáte. Přepínačem denně, týdně nebo měsíčně zobrazíte tempo v období, které vám vyhovuje.",
+        "noGoalMeaning": "Nastavte spořicí cíl v sekci Příjem, abyste viděli potřebné tempo spoření a sledovali pokrok.",
+        "formula": "(Cíl − aktuální úspory) ÷ zbývající měsíce",
+        "rows": {
+          "target": "Spořicí cíl",
+          "balance": "Celkem naspořeno",
+          "monthsLeft": "Zbývající měsíce",
+          "monthlyNeeded": "Měsíční potřeba spoření",
+          "monthlyTarget": "Měsíční částka odkládaná stranou",
+          "savePace": "Spořit za {{period}}"
+        }
+      },
+      "infoA11y": "Jak jsme to spočítali"
+    },
+    "home": {
+      "hero": {
+        "setGoalPrompt": "Nastavte cíl pro sledování měsíčního plánu spoření"
+      },
+      "headlineLabel": "Váš flexibilní rozpočet",
+      "spendingBudget": "Váš rozpočet na výdaje",
+      "spendingBudgetNote": "{{amount}} za měsíc po fixních nákladech",
+      "spendingBudgetNoteDeducted": "{{spend}} na útratu · {{goal}} rezervováno na cíl",
+      "goalTracking": {
+        "title": "Sledování cíle",
+        "onTrack": "V souladu s plánem",
+        "behind": "Za plánem",
+        "noGoalChip": "Cíl nenastaven",
+        "reduceCostsChip": "Snížení nákladů",
+        "reduceCostsLabel": "Soustředění na nižší výdaje domácnosti",
+        "ongoingChip": "Měsíční spoření",
+        "ongoingLabel": "Pravidelná měsíční částka odkládaná stranou",
+        "monthlyNeededLabel": "Měsíční částka potřebná k dosažení cíle",
+        "savePaceLabel": "Spořte {{amount}} za {{period}}, abyste cíle dosáhli",
+        "ongoingPaceLabel": "Odkládejte {{amount}} za {{period}}"
+      },
+      "monthlyNote": "{{amount}} za měsíc po fixních nákladech a splátkách dluhů",
+      "topCosts": "Největší kategorie nákladů",
+      "table": {
+        "category": "Kategorie",
+        "perdaily": "Za den",
+        "perweekly": "Za týden",
+        "permonthly": "Za měsíc"
+      },
+      "frequency": {
+        "prevA11y": "Zobrazit předchozí období",
+        "nextA11y": "Zobrazit další období",
+        "labelA11y": "Období částky, {{period}}"
+      },
+      "editSetup": "Upravit nastavení",
+      "editSection": "Upravit {{section}}",
+      "reviewAll": "Zkontrolovat všechny sekce",
+      "loading": "Načítáme váš rozpočet...",
+      "loadError": "Nepodařilo se načíst data domácnosti.",
+      "emptyTitle": "Zatím nemáte rozpočet",
+      "emptySubtitle": "Dokončete nastavení, aby se zde zobrazil váš domácí rozpočet.",
+      "startSetup": "Spustit nastavení",
+      "health": {
+        "fixedLoad": "Fixní zátěž",
+        "fixedLoadLabel": "Podíl příjmu vázaný na fixní náklady a dluhy",
+        "budgetFlexibility": "Flexibilita rozpočtu",
+        "budgetFlexibilityLabel": "Rezerva po rozpočtu na výdaje",
+        "surplus": "Měsíční rezerva",
+        "recurring": "Pravidelné náklady",
+        "recurringLabel": "Podíl příjmu na pravidelné platby",
+        "status": {
+          "tight": "Těsné — zkontrolujte největší náklady",
+          "overcommitted": "Přesaženo — náklady převyšují příjem",
+          "deficit": "Flexibilní rozpočet převyšuje zbývající částku"
+        }
+      },
+      "actions": {
+        "title": "Vyžaduje pozornost",
+        "viewAll": "Zobrazit vše"
+      },
+      "trackerSnapshot": {
+        "title": "Tempo výdajů",
+        "openTracker": "Otevřít sledování",
+        "noLogs": "Zatím neevidujete žádné výdaje — k dispozici je celý rozpočet.",
+        "a11y": "Tempo výdajů dnes a tento týden, otevřít sledování"
+      },
+      "monthEndStatus": {
+        "title": "Uzavření měsíce",
+        "rolloverBalance": "Zůstatek převodu",
+        "lastClosed": "Uzavřeno {{period}}",
+        "projected": "Odhadovaný zbytek tento měsíc",
+        "projectedAmount": "{{amount}} k dispozici",
+        "a11y": "Stav uzavření měsíce, otevřít nastavení rozpočtu"
+      },
+      "recurring": {
+        "title": "Pravidelné závazky",
+        "annual": "Za rok",
+        "review": "Zkontrolovat všechny pravidelné náklady",
+        "manyStreaming": "{{count}} streamovacích služeb — zvažte sloučení",
+        "subBudgetHeavy": "Předplatná tvoří {{pct}} % vašeho flexibilního rozpočtu"
+      },
+      "kpi": {
+        "dailyBudget": "Denní rozpočet",
+        "totalIncome": "Celkový příjem",
+        "totalExpenses": "Celkové výdaje",
+        "committedCosts": "Závazné náklady",
+        "committedCostsHint": "Fixní náklady + splátky dluhů měsíčně",
+        "savingGoal": "Spořicí cíl",
+        "perDay": "Za den",
+        "perWeek": "Za týden",
+        "perMonth": "Za měsíc",
+        "noGoal": "Nenastaveno",
+        "reduceCosts": "Snížit náklady",
+        "reduceCostsSubtitle": "Hlavní finanční cíl",
+        "savingsMonthly": "Měsíční cíl spoření",
+        "goalMonthly": "Měsíčně",
+        "goalByDeadline": "Do {{date}}",
+        "savingsBalance": "Aktuální úspory",
+        "totalSavings": "Celkové úspory",
+        "savingsInflow": "+{{amount}}/měsíc plánováno",
+        "looseMoneyHint": "{{amount}} volné peníze",
+        "a11y": {
+          "dailyBudget": "Denní rozpočet, {{amount}}, otevřít rozpočet"
+        }
+      },
+      "chart": {
+        "expensesTitle": "Výdaje",
+        "expensesSubtitle": "Fixní náklady podle kategorií — klepnutím zobrazíte položky",
+        "empty": "Zatím žádné kategorie výdajů"
+      },
+      "sections": {
+        "income": "Příjmy a úspory",
+        "housing": "Bydlení",
+        "transport": "Doprava",
+        "budget": "Rozpočet a převod"
+      }
+    },
+    "insights": {
+      "cardTitle": "Přehled domácnosti",
+      "viewAnalysis": "Zobrazit celou analýzu",
+      "actions": {
+        "reviewBudget": "Zkontrolovat rozpočet",
+        "reviewExpenses": "Zkontrolovat výdaje",
+        "reviewDebts": "Zkontrolovat dluhy",
+        "reviewSubscriptions": "Zkontrolovat předplatná"
+      },
+      "sectionTitle": "AI přehled",
+      "slotLabel": "Poznámka",
+      "headline": {
+        "balanced": "Fixní náklady a flexibilní rozpočet vypadají vyrovnaně.",
+        "tight": "Fixní náklady tvoří {{pct}} % příjmu — zkontrolujte největší kategorie.",
+        "overcommitted": "Fixní náklady a splátky dluhů přesahují {{pct}} % příjmu.",
+        "topCategory": "{{category}} je největší náklad — {{pct}} % příjmu."
+      },
+      "sections": {
+        "income": {
+          "empty": "Zatím nejsou zaznamenány žádné příjmy.",
+          "summary": "Zaznamenáno {{count}} zdroj(ů) příjmu."
+        },
+        "housing": {
+          "empty": "Nejsou zaznamenány náklady na bydlení.",
+          "highShare": "Bydlení tvoří {{pct}} % příjmu — stojí za kontrolu, zda ho lze snížit."
+        },
+        "transport": {
+          "empty": "Nejsou zaznamenány náklady na dopravu."
+        },
+        "health": {
+          "empty": "Nejsou zaznamenány platby za zdravotní pojištění."
+        },
+        "children": {
+          "empty": "Nejsou zaznamenány náklady na děti."
+        },
+        "pets": {
+          "empty": "Nejsou zaznamenány náklady na domácí mazlíčky."
+        },
+        "subscriptions": {
+          "empty": "Nejsou zaznamenána žádná předplatná.",
+          "summary": "{{count}} předplatných tvoří {{pct}} % měsíčního příjmu.",
+          "manyStreaming": "{{count}} streamovacích služeb — možná je lze sloučit.",
+          "renewalsSoon": "{{count}} obnovení v příštích 30 dnech."
+        },
+        "other": {
+          "empty": "Nejsou zaznamenány jiné pravidelné náklady."
+        },
+        "debts": {
+          "empty": "Nejsou zaznamenány žádné dluhy.",
+          "summary": "{{count}} dluhů s minimálními měsíčními splátkami.",
+          "highApr": "{{count}} dluh(ů) s vysokým úrokem — extra splátky pomohou nejvíc."
+        },
+        "budget": {
+          "summary": "Flexibilní výdaje jsou {{pct}} % příjmu po fixních nákladech.",
+          "negativeSurplus": "Flexibilní rozpočet je vyšší než zbývající částka po fixních nákladech."
+        },
+        "goals": {
+          "empty": "Zatím není nastaven finanční cíl.",
+          "onTrack": "Cíl vypadá dosažitelně s vaším současným flexibilním rozpočtem.",
+          "atRisk": "Možná budete muset měsíčně více spořit nebo upravit termín cíle."
+        },
+        "generic": {
+          "summary": "Tato kategorie tvoří {{pct}} % vašeho měsíčního příjmu."
+        }
+      }
+    },
+    "summaryScreen": {
+      "intro": "Úplná domácí účetní kniha s poznámkami ke každé sekci. Klepnutím na Upravit aktualizujete danou oblast.",
+      "healthSection": "Závazky nákladů",
+      "edit": "Upravit",
+      "tableNote": "Měsíční částky v {{currency}}"
+    },
+    "expensesScreen": {
+      "totalMonthly": "Celkové měsíční výdaje",
+      "totalExpenses": "Celkové výdaje",
+      "committedCosts": "Závazné náklady",
+      "committedBreakdown": "{{fixed}} fixní · {{debt}} dluhy",
+      "committedAnnual": "{{amount}} za rok",
+      "addExpense": "Přidat {{type}}",
+      "annualTotal": "{{amount}} za rok",
+      "chartTitle": "Výdaje podle kategorií",
+      "tableTitle": "Rozpis výdajů",
+      "insightContextTitle": "Přehled kategorie",
+      "emptyPanel": "V této skupině zatím nejsou žádné výdaje.",
+      "emptyHint": "Klepněte na Přidat níže — nemusíte opouštět tuto obrazovku.",
+      "tabs": {
+        "fixed": "Fixní výdaje",
+        "recurring": "Pravidelné výdaje",
+        "overview": "Přehled",
+        "primaryA11y": "Typ výdajů",
+        "secondaryA11y": "Kategorie výdajů",
+        "helper": {
+          "overview": "Všechny závazné náklady podle kategorií — nájem, služby, splátky dluhů a další.",
+          "fixed": "Náklady, které jsou každý měsíc zhruba stejné — nájem, energie, pojištění, daně.",
+          "recurring": "Pravidelné, ale proměnlivé výdaje — předplatná, doprava, mazlíčci a minimální splátky dluhů."
+        }
+      },
+      "subtabs": {
+        "rent": "Nájem",
+        "utilities": "Energie a služby",
+        "health_insurance": "Zdravotní pojištění",
+        "waste_tax": "Poplatek za odpad",
+        "tv_licence": "Poplatek za televizi",
+        "radio_licence": "Poplatek za rádio",
+        "subscriptions": "Předplatná",
+        "internet": "Internet",
+        "pets": "Domácí mazlíčci",
+        "mortgage": "Hypotéka",
+        "transport": "Doprava",
+        "children": "Děti",
+        "debts": "Dluhy",
+        "housing_other": "Ostatní výdaje na bydlení",
+        "family_contribution": "Příspěvek domácnosti",
+        "other": "Ostatní výdaje",
+        "custom_taxes": "Ostatní poplatky"
+      },
+      "subtabEmpty": "Zatím nemáte žádné výdaje v kategorii {{type}}.",
+      "edit": {
+        "amount": "Částka",
+        "renewalDate": "Datum obnovení",
+        "dueDate": "Datum splatnosti",
+        "endDate": "Datum konce pojištění",
+        "monthlyOnly": "Účtováno měsíčně",
+        "annualOnly": "Účtováno ročně"
+      },
+      "recurringTableTitle": "Pravidelné výdaje",
+      "fixedTableTitle": "Fixní výdaje",
+      "editSectionHint": "Tento výdaj patří do sekce domácnosti. Otevřete editor sekce pro změnu detailů.",
+      "openSectionEdit": "Upravit sekci",
+      "breakdown": {
+        "fixed": "Fixní výdaje",
+        "recurring": "Pravidelné výdaje"
+      },
+      "dueOn": "Splatnost {{date}}",
+      "noDate": "—",
+      "table": {
+        "name": "Položka",
+        "expense": "Výdaj",
+        "category": "Kategorie",
+        "subcategory": "Podkategorie",
+        "amount": "Částka",
+        "monthly": "Měsíčně",
+        "share": "Podíl",
+        "date": "Datum"
+      },
+      "fixedRecurring": {
+        "title": "Fixní a pravidelné výdaje",
+        "fixedCosts": "Fixní výdaje",
+        "recurring": "Pravidelné výdaje",
+        "combined": "Dopad na váš příjem",
+        "ofIncome": "{{pct}} % příjmu",
+        "salaryImpact": "{{amount}} z vašeho měsíčního příjmu {{income}} ({{pct}} %) jde na fixní a pravidelné výdaje"
+      },
+      "empty": "V této kategorii nejsou žádné výdaje.",
+      "renewsOn": "Obnovení {{date}}",
+      "endsOn": "Pojištění končí {{date}}",
+      "renewalSoon": "Brzy se obnoví",
+      "filters": {
+        "all": "Vše",
+        "subscriptions": "Předplatná",
+        "insurance": "Pojištění",
+        "housing": "Bydlení",
+        "transport": "Doprava",
+        "other": "Ostatní"
+      }
+    },
+    "goalsScreen": {
+      "empty": "Zatím nemáte nastavený finanční cíl.",
+      "setGoal": "Nastavit cíl",
+      "goalType": "Váš cíl",
+      "reduceCosts": "Snížit náklady",
+      "reduceCostsHelper": "Bida se zaměří na hledání úspor a omezení výdajů.",
+      "ongoingTarget": "Měsíční spoření",
+      "ongoingHelper": "Pevná částka, kterou plánujete odkládat každý měsíc.",
+      "target": "Cílová částka",
+      "byDate": "Termín: {{date}}",
+      "currentSavings": "Aktuální úspory",
+      "monthlyNeeded": "Potřebné měsíční spoření",
+      "onTrack": "Na dobré cestě — máte {{amount}} flexibilně měsíčně.",
+      "gap": "Potřebujete {{needed}} měsíčně, ale flexibilně máte jen {{available}}."
+    },
+    "savingsScreen": {
+      "totalBalance": "Celkové úspory",
+      "balanceHelper": "Váš aktuální zůstatek úspor z onboardingu.",
+      "monthlyPlan": "Plánované měsíční úspory",
+      "monthlyPlanHelper": "Z rozdělení rozpočtu, cíle spoření a nastavení převodu.",
+      "noInflows": "Zatím nemáte plánované měsíční úspory — upravte rozpočet nebo nastavte cíl spoření.",
+      "variable": "Závisí na útratě",
+      "resetPolicy": "Pravidlo pro nespotřebovaný rozpočet",
+      "resetToSavings": "Zbylý flexibilní rozpočet se na konci měsíce přičte k úsporám.",
+      "resetToOther": "Zbytek se odkládá na: {{name}}",
+      "resetLooseMoney": "Zbylý flexibilní rozpočet se na konci měsíce sleduje jako volné peníze.",
+      "looseMoney": "Volné peníze",
+      "looseMoneyHelper": "Nepřiřazené peníze z měsíců, kdy jste neutratili celý flexibilní rozpočet.",
+      "otherGoalHelper": "Peníze odkládané na konci měsíce na tento cíl.",
+      "otherGoalFallback": "Jiný cíl",
+      "projectionTitle": "Očekávané úspory",
+      "projectionHelper": "Odhadovaný zůstatek, pokud budete pokračovat v plánovaných měsíčních úsporách po dobu jednoho roku.",
+      "projectionGoalHelper": "Projekce směrem k {{target}} do {{date}} na základě plánovaných měsíčních úspor.",
+      "inflow": {
+        "budgetShift": "Rozdělení rozpočtu do úspor",
+        "goalReserve": "Rezervace pro cíl spoření",
+        "ongoingGoal": "Měsíční cíl spoření",
+        "resetPolicy": "Nespotřebovaný rozpočet → úspory (konec měsíce)",
+        "resetLoose": "Nespotřebovaný rozpočet → volné peníze (konec měsíce)"
+      },
+      "chart": {
+        "empty": "Přidejte zůstatek úspor nebo měsíční plán, aby se zobrazila projekce.",
+        "now": "Nyní",
+        "monthsAhead": "{{months}} měsíců dopředu",
+        "goalMonth": "Cíl za {{months}} měsíců",
+        "projected": "Projekce: {{amount}}"
+      }
+    },
+    "trackerScreen": {
+      "intro": {
+        "title": "Tempo útraty",
+        "body": "Sledujte, jak si vedete dnes, tento týden a tento měsíc — včetně toho, kam půjde zbytek rozpočtu na konci měsíce.",
+        "loggingSoon": "Zápis výdajů přijde brzy. Náhledy se budou aktualizovat podle zaznamenané útraty."
+      },
+      "noSpendLogged": "Zatím není zaznamenána útrata — kapesné ukazuje celý rozpočet pro dané období.",
+      "daily": {
+        "title": "Dnes",
+        "helper": "Vaše denní flexibilní kapesné a dosavadní útrata.",
+        "allowance": "Dnešní kapesné",
+        "spent": "Utráceno dnes",
+        "remaining": "Zbývá dnes",
+        "over": "Překročeno dnes",
+        "status": {
+          "under": "Pod dnešním tempem — máte prostor.",
+          "on_track": "Dnes jste v tempu.",
+          "over": "Překročeno dnešní kapesné."
+        }
+      },
+      "weekly": {
+        "title": "Tento týden",
+        "helper": "Součty pondělí–neděle pro flexibilní rozpočet.",
+        "allowance": "Kapesné tento týden",
+        "spent": "Utráceno tento týden",
+        "remaining": "Zbývá tento týden",
+        "over": "Překročeno tento týden",
+        "status": {
+          "under": "Pod týdenním tempem — jste napřed.",
+          "on_track": "Týden jste v tempu.",
+          "over": "Překročeno týdenní kapesné."
+        }
+      },
+      "monthly": {
+        "title": "Tento měsíc",
+        "helper": "Přesměrování na konci měsíce podle dosavadní útraty a nastavení převodu.",
+        "spentSoFar": "Utráceno tento měsíc",
+        "projectedLeftover": "Odhadovaný zbytek",
+        "goesTo": "Při tomto tempu půjde zbytek do",
+        "noLeftover": "Žádný zbytek — flexibilní rozpočet je vyčerpán (nebo překročen).",
+        "route": {
+          "rolloverFree": "Flexibilní rozpočet příštího měsíce (převod)",
+          "rolloverCapped": "Zůstatek převodu (v rámci limitu)",
+          "rolloverCappedSplit": "{{rollover}} do převodu · {{loose}} jako volné peníze (nad limit)",
+          "savings": "Zůstatek úspor",
+          "looseMoney": "Zůstatek volných peněz",
+          "otherGoal": "Odloženo na: {{name}}"
+        }
+      }
+    },
+    "monthEndHistory": {
+      "title": "Minulé přesměrování na konci měsíce",
+      "helper": "Kam šel zbylý flexibilní rozpočet po uzavření jednotlivých měsíců.",
+      "rollover": "Přidáno k převodu",
+      "savings": "Přidáno k úsporám",
+      "looseMoney": "Přidáno k volným penězům",
+      "otherGoal": "Odloženo na jiný cíl",
+      "excessLoose": "+{{amount}} nad limit → volné peníze"
+    },
+    "budgetScreen": {
+      "flexible": "Flexibilní rozpočet",
+      "detailsTitle": "Detaily rozpočtu",
+      "annualEquivalent": "{{monthly}} za měsíc · {{amount}} za rok",
+      "monthlyEquivalent": "{{amount}} za měsíc",
+      "spendingAfterDeduction": "{{amount}} na útratu po rezervaci {{deduction}} na cíl",
+      "savingsShift": "{{amount}} měsíčně přesměrováno do úspor z flexibilního rozpočtu",
+      "available": "Vypočtená dostupná částka: {{amount}}",
+      "unallocatedSlider": {
+        "title": "Přesunout nealokované prostředky do úspor",
+        "helper": "{{amount}} k dispozici po závazcích. Posunutím rozdělíte mezi výdaje a úspory.",
+        "moreSavings": "Více do úspor",
+        "moreSpending": "Více na výdaje",
+        "a11y": "Nastavit rozdělení nealokovaných prostředků mezi výdaje a úspory"
+      },
+      "deductSavingsGoal": {
+        "label": "Odečíst cíl spoření z rozpočtu na útratu",
+        "helper": "Odečte měsíční částku potřebnou k dosažení cíle od rozpočtu na útratu zobrazeného na přehledu.",
+        "yes": "Odečíst z rozpočtu",
+        "no": "Nechat zvlášť"
+      },
+      "frequency": {
+        "daily": "Zobrazeno za den",
+        "weekly": "Zobrazeno za týden",
+        "monthly": "Zobrazeno za měsíc"
+      },
+      "rollover": {
+        "title": "Strategie převodu",
+        "free": "Volný převod",
+        "capped": "Omezený převod",
+        "reset": "Reset každý měsíc",
+        "multiplier": "Strop {{value}}× denní rozpočet"
+      }
+    },
+    "alertsScreen": {
+      "empty": "Žádná upozornění — máte vše aktuální.",
+      "review": "Zkontrolovat",
+      "snooze": "Odložit o 7 dní",
+      "dismiss": "Zavřít",
+      "fallback": {
+        "subscription": "Předplatné",
+        "debt": "Dluh"
+      },
+      "types": {
+        "subscriptionRenewal": "{{name}} se obnoví za {{days}} dní",
+        "healthExpiry": "Pojištění ({{member}}) končí za {{days}} dní",
+        "motDue": "STK za {{days}} dní",
+        "insuranceRenewal": "Pojištění vozidla se obnoví za {{days}} dní",
+        "highApr": "{{name}} má {{apr}} % RPSN — vysoký úrok",
+        "promoExpiry": "Promo sazba končí za {{days}} dní",
+        "negativeSurplus": "Rozpočet na výdaje přesahuje volné prostředky o {{amount}}",
+        "overcommitted": "Fixní náklady a dluhy tvoří {{pct}} % příjmu",
+        "manyStreaming": "{{count}} streamovacích služeb — zvažte sloučení"
+      },
+      "actions": {
+        "reviewBudget": "Zkontrolovat rozpočet",
+        "reviewCosts": "Zkontrolovat výdaje",
+        "reviewHealth": "Zkontrolovat zdravotní pojištění",
+        "reviewTransport": "Zkontrolovat dopravu",
+        "reviewDebts": "Zkontrolovat dluhy",
+        "reviewSubscriptions": "Zkontrolovat předplatná"
+      }
+    },
+    "incomeScreen": {
+      "total": "Celkový měsíční příjem",
+      "annualTotal": "{{amount}} za rok",
+      "streamsTitle": "Příjmové toky",
+      "chartTitle": "Příjem podle zdroje",
+      "tableTitle": "Rozpis příjmů",
+      "empty": "Zatím nemáte zaznamenaný žádný příjem.",
+      "emptyPanel": "V této skupině zatím není žádný příjem.",
+      "subtabEmpty": "Zatím nemáte žádný příjem v kategorii {{type}}.",
+      "otherEmpty": "Zatím jste nepřidali žádné další zdroje příjmu.",
+      "otherEmptyHint": "OSVČ, dávky, nájem z bytu — přidejte každý pravidelný zdroj zde.",
+      "addOtherSource": "Přidat jiný příjem",
+      "namedIncome": "Příjem uživatele {{name}}",
+      "otherSource": "Jiný zdroj {{n}}",
+      "sourceLabel": "Název zdroje",
+      "monthlyEquivalent": "{{amount}} za měsíc",
+      "saveStream": "Uložit změny",
+      "saved": "Uloženo",
+      "savingsBalance": "Aktuální úspory",
+      "savingsTarget": "Měsíční cíl spoření",
+      "tabs": {
+        "overview": "Přehled",
+        "primary": "Hlavní příjem",
+        "other": "Ostatní zdroje",
+        "primaryA11y": "Typ příjmu",
+        "secondaryA11y": "Zdroj příjmu"
+      },
+      "table": {
+        "source": "Zdroj",
+        "share": "Podíl"
+      }
+    },
+    "recurring": {
+      "healthSelf": "Vaše zdravotní pojištění",
+      "healthPartner": "Zdravotní pojištění partnera",
+      "healthChild": "Zdravotní pojištění dítěte",
+      "vehicleInsurance": "Pojištění vozidla",
+      "vehicleInsuranceN": "Pojištění vozidla {{n}}",
+      "debtPayment": "Splátka dluhu"
+    },
     "placeholder": {
-      "title": "Vítejte v PocketOS",
+      "title": "Vítejte v Bida",
       "subtitle": "Vaše finanční přehlednost začíná zde"
+    }
+  },
+  "sectionEdit": {
+    "editButton": "Upravit",
+    "closeA11y": "Zavřít editor",
+    "loading": "Načítáme vaše data…",
+    "loadError": "Tuto sekci se nepodařilo načíst. Zkuste to později.",
+    "saveError": "Změny se nepodařilo uložit. Zkuste to znovu.",
+    "income": {
+      "helper": "Upravte částky přímo — změny se ihned uloží do rozpočtu domácnosti.",
+      "yourIncome": "Váš příjem",
+      "partnerIncome": "Příjem partnera",
+      "savingsBalance": "Aktuální zůstatek spoření",
+      "savingsMonthly": "Měsíční cíl spoření",
+      "goalType": "Jaký je váš finanční cíl?",
+      "saveMode": "Jak chcete šetřit?",
+      "goalDescription": "Popis cíle",
+      "goalAmount": "Cílová částka",
+      "goalDate": "Cílové datum",
+      "validation": {
+        "amount": "Zadejte prosím výši příjmu",
+        "goal": "Zadejte prosím cílovou částku",
+        "saveMode": "Vyberte prosím, jak chcete šetřit",
+        "ongoing": "Zadejte prosím měsíční cíl spoření"
+      }
+    },
+    "budget": {
+      "helper": "Nastavte flexibilní rozpočet na útratu a převod nevyčerpaných částek.",
+      "monthlyFlexible": "Měsíční flexibilní rozpočet",
+      "displayFrequency": "Jak chcete rozpočet zobrazovat",
+      "deductSavingsGoal": "Odečíst cíl spoření z rozpočtu na útratu?",
+      "effectiveSpend": "{{amount}} k dispozici na útratu po rezervaci cíle",
+      "calculated": "Vypočteno z příjmů a nákladů: {{amount}}",
+      "rollover": "Strategie převodu",
+      "validation": {
+        "amount": "Zadejte prosím flexibilní rozpočet"
+      }
+    },
+    "debts": {
+      "helper": "Upravte zůstatky a minimální splátky u každého dluhu.",
+      "empty": "Žádné dluhy nejsou zaznamenány. Přidejte jeden níže.",
+      "itemLabel": "Dluh {{n}}",
+      "add": "Přidat dluh",
+      "validation": "Každý dluh potřebuje zůstatek a minimální splátku"
+    },
+    "subscriptions": {
+      "helper": "Upravte náklady na předplatná a frekvenci plateb.",
+      "empty": "Žádná předplatná nejsou zaznamenána.",
+      "unnamed": "Předplatné",
+      "validation": "Každé předplatné potřebuje částku"
+    },
+    "otherCosts": {
+      "helper": "Upravte ostatní pravidelné náklady a frekvenci plateb.",
+      "empty": "Žádné ostatní náklady nejsou zaznamenány.",
+      "unnamed": "Ostatní náklad",
+      "validation": "Každý náklad potřebuje částku"
+    },
+    "pets": {
+      "helper": "Upravte náklady na krmení a veterináře u každého mazlíčka.",
+      "empty": "Žádní mazlíčci nejsou zaznamenáni.",
+      "unnamed": "Mazlíček {{n}}",
+      "name": "Jméno mazlíčka",
+      "food": "Krmení",
+      "vet": "Veterinář / péče"
+    },
+    "housing": {
+      "helper": "Upravte hlavní náklady na bydlení. Ostatní údaje z nastavení zůstávají zachovány.",
+      "type": "Typ bydlení: {{type}}",
+      "rent": "Měsíční nájem",
+      "utilities": "Měsíční služby",
+      "internet": "Internet",
+      "mortgage": "Měsíční splátka hypotéky",
+      "otherCost": "Ostatní náklad {{n}}",
+      "familyContribution": "Příspěvek domácnosti {{n}}"
+    },
+    "transport": {
+      "helper": "Upravte náklady na dopravu. Ostatní údaje o vozidle z nastavení zůstávají zachovány.",
+      "publicTransport": "Lístek / jízdenka MHD",
+      "vehicle": "Vozidlo {{n}}",
+      "fuel": "Palivo / nabíjení",
+      "insurance": "Pojištění",
+      "parking": "Parkování",
+      "empty": "Žádné náklady na dopravu nejsou zaznamenány."
+    },
+    "health": {
+      "helper": "Upravte pojistné za každého člena domácnosti.",
+      "loading": "Načítáme členy domácnosti…",
+      "validation": "Zadejte prosím výši pojistného"
+    },
+    "children": {
+      "helper": "Upravte částky nákladů u každého dítěte. Nové položky přidejte v nastavení.",
+      "noChildren": "V profilu domácnosti nejsou žádné děti.",
+      "empty": "Zatím nejsou zaznamenány žádné náklady na děti.",
+      "noFields": "U tohoto dítěte nejsou žádné nákladové položky.",
+      "childLabel": "Dítě {{n}}",
+      "otherCost": "Ostatní náklad"
+    },
+    "sections": {
+      "income": "Upravit příjmy",
+      "housing": "Upravit bydlení",
+      "transport": "Upravit dopravu",
+      "health": "Upravit zdravotní pojištění",
+      "children": "Upravit náklady na děti",
+      "pets": "Upravit domácí mazlíčky",
+      "subscriptions": "Upravit předplatná",
+      "other": "Upravit ostatní náklady",
+      "debts": "Upravit dluhy",
+      "budget": "Upravit rozpočet"
     }
   },
   "settings": {
     "title": "Nastavení",
     "redoSetup": "Znovu nastavit",
+    "revokeConsent": "Odvolat souhlas",
+    "revokeConsentConfirmTitle": "Jste si jisti?",
+    "revokeConsentConfirmMessage": "Tímto smažete všechna svá data a postup. Budete muset znovu vyplnit dotazník.",
+    "revokeConsentConfirmButton": "Odvolat",
     "language": "Jazyk",
     "theme": "Téma",
     "currency": "Měna"

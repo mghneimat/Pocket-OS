@@ -1,28 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, Animated, Easing } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useOnboardingLayout } from '../../lib/onboardingLayout';
+import { OnboardingScrollContext } from '../../lib/onboardingScroll';
 import { Text } from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { C, R, T, S } from '../../constants/onboarding-theme';
+import PrimaryButton from '../ui/PrimaryButton';
 import FadeUpView from './FadeUpView';
-import Svg, { Path } from 'react-native-svg';
-
-/**
- * Arrow-left icon using react-native-svg (fixes broken icon from gluestack).
- */
-function ArrowLeftIcon({ color = '#6B7A99', size = 16 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M19 12H5m7-7l-7 7 7 7"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
+import OnboardingNavBackButton from './OnboardingNavBackButton';
+import { useSectionEditOptional } from '../../lib/SectionEditContext';
 
 /**
  * Standard question screen wrapper.
@@ -36,7 +24,6 @@ function ArrowLeftIcon({ color = '#6B7A99', size = 16 }) {
  * @param {string} props.title - Question title
  * @param {string} [props.helper] - Helper text below title
  * @param {string} [props.description] - Longer descriptive text below the question (e.g. "This unlocks a dedicated section for children's costs.")
- * @param {React.ReactNode} [props.illustration] - Placeholder image/SVG shown above the title
  * @param {React.ReactNode} props.children - Input area content
  * @param {Function} props.onContinue - Continue button handler
  * @param {Function} [props.onBack] - Custom back handler (defaults to router.back)
@@ -44,15 +31,14 @@ function ArrowLeftIcon({ color = '#6B7A99', size = 16 }) {
  * @param {string} [props.validationError] - Validation error message
  * @param {boolean} [props.continueDisabled] - Disable continue button
  * @param {number} [props.progress] - Progress 0–100 for the progress bar
- * @param {string} [props.progressLabel] - Label shown next to progress bar
  * @param {any} [props.animationKey] - When this changes, content area fades up
+ * @param {string} [props.continueLabel] - Override continue button label (e.g. Save in edit mode)
  */
 export default function QuestionScreen({
   chapter,
   title,
   helper,
   description,
-  illustration,
   children,
   onContinue,
   onBack,
@@ -60,19 +46,36 @@ export default function QuestionScreen({
   validationError,
   continueDisabled = false,
   progress,
-  progressLabel,
   animationKey,
+  continueLabel,
 }) {
   const { t } = useI18n();
   const router = useRouter();
-  const [backHovered, setBackHovered] = useState(false);
-  const [backPressed, setBackPressed] = useState(false);
-  const [continueHovered, setContinueHovered] = useState(false);
-  const [continuePressed, setContinuePressed] = useState(false);
-  const backCooldown = useRef(false);
-
+  const insets = useSafeAreaInsets();
+  const isEditMode = Boolean(useSectionEditOptional()?.isActive);
+  const layout = useOnboardingLayout();
+  const [submitting, setSubmitting] = useState(false);
   const fillAnim = useRef(new Animated.Value(progress !== undefined ? progress : 0)).current;
+  const scrollRef = useRef(null);
+  const contentRef = useRef(null);
   const hasProgress = progress !== undefined;
+
+  const scrollToAnchor = useCallback((anchorRef) => {
+    setTimeout(() => {
+      if (!anchorRef?.current || !scrollRef.current || !contentRef.current) return;
+      anchorRef.current.measureInWindow((_ax, anchorY) => {
+        contentRef.current.measureInWindow((_cx, contentY) => {
+          const offset = anchorY - contentY;
+          scrollRef.current?.scrollTo({ y: Math.max(0, offset - 24), animated: true });
+        });
+      });
+    }, 320);
+  }, []);
+
+  const scrollContextValue = useMemo(
+    () => ({ scrollRef, contentRef, scrollToAnchor }),
+    [scrollToAnchor],
+  );
 
   useEffect(() => {
     if (hasProgress) {
@@ -86,9 +89,6 @@ export default function QuestionScreen({
   }, [progress, hasProgress]);
 
   const handleBack = () => {
-    if (backCooldown.current) return;
-    backCooldown.current = true;
-    setTimeout(() => { backCooldown.current = false; }, 500);
     if (onBack) {
       onBack();
     } else if (router.canGoBack && router.canGoBack()) {
@@ -96,66 +96,60 @@ export default function QuestionScreen({
     }
   };
 
+  const handleContinue = async () => {
+    if (submitting || continueDisabled) return;
+    setSubmitting(true);
+    try {
+      await onContinue?.();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isContinueDisabled = continueDisabled || submitting;
+
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
 
-      {/* ── Nav bar ── */}
-      <View style={{
-        backgroundColor: C.surface,
-        height: S.navHeight,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: C.border,
-      }}>
-        {/* Back arrow — top left, full-height hover */}
-        <Pressable
-          onPress={handleBack}
-          onPressIn={() => setBackPressed(true)}
-          onPressOut={() => setBackPressed(false)}
-          onHoverIn={() => setBackHovered(true)}
-          onHoverOut={() => setBackHovered(false)}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingLeft: 36,
-            paddingRight: 40,
-            height: S.navHeight,
-            backgroundColor: backHovered
-              ? C.overlayHover
-              : backPressed
-                ? C.overlayPressed
-                : 'transparent',
-          }}
-        >
-          <ArrowLeftIcon color={C.muted} size={24} />
-        </Pressable>
-
-        {/* Chapter title — centered */}
+      {!isEditMode ? (
         <View style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
+          backgroundColor: C.surface,
+          height: S.navHeight,
+          flexDirection: 'row',
           alignItems: 'center',
-          pointerEvents: 'none',
+          borderBottomWidth: 1,
+          borderBottomColor: C.border,
         }}>
-          {chapter ? (
-            <Text style={{
-              ...T.chapterLabel,
-              textTransform: 'uppercase',
-            }}>
-              {chapter}
-            </Text>
-          ) : null}
+          <OnboardingNavBackButton onPress={handleBack} />
+          <View style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            pointerEvents: 'none',
+          }}>
+            {chapter ? (
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={{
+                ...T.chapterLabel,
+                maxWidth: layout.width - 160,
+              }}>
+                {chapter}
+              </Text>
+            ) : null}
+          </View>
+          <View style={{ width: 100 }} />
         </View>
-
-        {/* Right spacer to balance the back button */}
-        <View style={{ width: 100 }} />
-      </View>
+      ) : null}
 
       {/* ── Progress bar (thin line under nav bar) ── */}
       {hasProgress ? (
-        <View style={{
+        <View
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(progress) }}
+          style={{
           height: S.progressHeight,
           backgroundColor: C.progressTrack,
         }}>
@@ -172,36 +166,29 @@ export default function QuestionScreen({
 
       {/* ── Scrollable content ── */}
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingVertical: 32 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{
+        <OnboardingScrollContext.Provider value={scrollContextValue}>
+        <View
+          ref={contentRef}
+          collapsable={false}
+          style={{
           width: '100%',
           maxWidth: S.maxWidth,
-          paddingHorizontal: S.pagePadH,
+          paddingHorizontal: layout.pagePadH,
           alignSelf: 'center',
         }}>
           <FadeUpView animationKey={animationKey}>
-            {/* Illustration / placeholder image above title — full width, 300px high */}
-            {illustration ? (
-              <View style={{
-                width: '100%',
-                height: 300,
-                marginBottom: 20,
-                borderRadius: R.input,
-                overflow: 'hidden',
-                backgroundColor: C.surface,
-                borderWidth: 1,
-                borderColor: C.border,
-              }}>
-                {illustration}
-              </View>
-            ) : null}
-
             {/* Question title */}
-            <Text style={{
+            <Text
+              accessibilityRole="header"
+              style={{
               ...T.questionTitle,
+              fontSize: layout.questionTitleSize,
+              lineHeight: layout.questionTitleSize + 8,
               marginBottom: 8,
             }}>
               {title}
@@ -231,10 +218,9 @@ export default function QuestionScreen({
                 alignItems: 'flex-start',
               }}>
                 <Text style={{
-                  fontSize: 13,
+                  ...T.caption,
                   lineHeight: 20,
                   color: C.muted,
-                  fontFamily: 'Inter',
                 }}>
                   {description}
                 </Text>
@@ -248,7 +234,10 @@ export default function QuestionScreen({
 
             {/* Validation error */}
             {validationError ? (
-              <View style={{
+              <View
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+                style={{
                 marginBottom: 16,
                 padding: 12,
                 backgroundColor: C.dangerBg,
@@ -256,13 +245,14 @@ export default function QuestionScreen({
                 borderColor: C.dangerBorder,
                 borderRadius: R.input,
               }}>
-                <Text style={{ fontSize: 13, color: C.danger, lineHeight: 20 }}>
+                <Text style={{ ...T.hint, color: C.danger, lineHeight: 20 }}>
                   {validationError}
                 </Text>
               </View>
             ) : null}
           </FadeUpView>
         </View>
+        </OnboardingScrollContext.Provider>
       </ScrollView>
 
       {/* ── Bottom bar (fixed, matching UI Examples) ── */}
@@ -270,52 +260,40 @@ export default function QuestionScreen({
         backgroundColor: C.surface,
         borderTopWidth: 1,
         borderTopColor: C.border,
+        paddingBottom: Math.max(insets.bottom, 0),
       }}>
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
-          height: 74,
-          paddingHorizontal: S.pagePadH,
+          minHeight: 74,
+          paddingHorizontal: layout.pagePadH,
           maxWidth: S.maxWidth,
           width: '100%',
           alignSelf: 'center',
         }}>
-          {/* Continue button — full width */}
-          <Pressable
-            onPress={onContinue}
-            disabled={continueDisabled}
-            onPressIn={() => setContinuePressed(true)}
-            onPressOut={() => setContinuePressed(false)}
-            onHoverIn={() => setContinueHovered(true)}
-            onHoverOut={() => setContinueHovered(false)}
-            style={{
-              flex: 1,
-              paddingVertical: 16,
-              paddingHorizontal: 24,
-              borderRadius: R.button,
-              backgroundColor: continueDisabled
-                ? C.disabled
-                : continuePressed ? C.accentPressed : C.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: continueHovered && !continueDisabled ? 0.92 : 1,
-            }}
+          <PrimaryButton
+            onPress={handleContinue}
+            disabled={isContinueDisabled}
+            accessibilityState={{ busy: submitting, disabled: isContinueDisabled }}
           >
-            <Text style={{ ...T.btnPrimary, color: '#FFFFFF' }}>
-              {t('common.continue')}
-            </Text>
-          </Pressable>
+            {submitting ? t('common.saving') : (continueLabel || t('common.continue'))}
+          </PrimaryButton>
         </View>
 
         {/* Skip button — below the bar */}
         {onSkip ? (
           <Pressable
             onPress={onSkip}
-            style={{
+            accessibilityRole="button"
+            accessibilityLabel={t('common.skip')}
+            style={({ pressed }) => ({
+              minHeight: 44,
               paddingVertical: 8,
               alignItems: 'center',
+              justifyContent: 'center',
               paddingBottom: 12,
-            }}
+              opacity: pressed ? 0.7 : 1,
+            })}
           >
             <Text style={{ ...T.btnSkip }}>
               {t('common.skip')}

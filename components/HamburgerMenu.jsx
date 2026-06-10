@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
-import { View, Text, Pressable, Modal, Animated, Dimensions } from 'react-native';
+import { View, Text, Pressable, Modal, Animated, Dimensions, Alert } from 'react-native';
 import { useI18n } from '../lib/i18n';
 import { useRouter } from 'expo-router';
+import { revokeConsent } from '../lib/consent';
+import { USE_NATIVE_DRIVER } from '../lib/animation';
+import { elevationShadow } from '../lib/shadow';
 import { C } from '../constants/onboarding-theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -38,12 +41,12 @@ export default function HamburgerMenu() {
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 280,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
       Animated.timing(backdropAnim, {
         toValue: 1,
         duration: 280,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
     ]).start();
   };
@@ -59,12 +62,12 @@ export default function HamburgerMenu() {
       Animated.timing(slideAnim, {
         toValue: DRAWER_WIDTH,
         duration: 240,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
       Animated.timing(backdropAnim, {
         toValue: 0,
         duration: 240,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }),
     ]).start(() => {
       setModalVisible(false);
@@ -96,6 +99,27 @@ export default function HamburgerMenu() {
   const handleAlertsPress = () => {
     closeMenu();
     setTimeout(() => router.push('/(app)/alerts'), 260);
+  };
+
+  const handleRevokeConsentPress = () => {
+    closeMenu();
+    setTimeout(() => {
+      Alert.alert(
+        t('settings.revokeConsentConfirmTitle'),
+        t('settings.revokeConsentConfirmMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('settings.revokeConsentConfirmButton'),
+            style: 'destructive',
+            onPress: async () => {
+              await revokeConsent();
+              router.replace('/(onboarding)/consent');
+            },
+          },
+        ],
+      );
+    }, 260);
   };
 
   // Dropdown overlay animation
@@ -166,11 +190,7 @@ export default function HamburgerMenu() {
             backgroundColor: C.surface,
             borderLeftWidth: 1,
             borderLeftColor: C.border,
-            shadowColor: '#000',
-            shadowOffset: { width: -4, height: 0 },
-            shadowOpacity: 0.12,
-            shadowRadius: 16,
-            elevation: 16,
+            ...elevationShadow({ offsetX: -4, offsetY: 0, blur: 16, opacity: 0.12 }),
             transform: [{ translateX: slideAnim }],
           }}
         >
@@ -256,11 +276,7 @@ export default function HamburgerMenu() {
                     borderRadius: 12,
                     borderWidth: 1,
                     borderColor: C.border,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.12,
-                    shadowRadius: 12,
-                    elevation: 12,
+                    ...elevationShadow({ offsetY: 4, blur: 12, opacity: 0.12 }),
                     overflow: 'hidden',
                   }}>
                     {languages.map((lang, index) => (
@@ -309,12 +325,31 @@ export default function HamburgerMenu() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 backgroundColor: pressed ? C.bg : 'transparent',
+                borderBottomWidth: 1,
+                borderBottomColor: C.border,
               })}
             >
               <Text style={{ fontSize: 15, color: C.text }}>
                 {t('dashboard.alerts')}
               </Text>
               <Text style={{ fontSize: 15, color: C.muted }}>{'→'}</Text>
+            </Pressable>
+
+            {/* Withdraw consent */}
+            <Pressable
+              onPress={handleRevokeConsentPress}
+              style={({ pressed }) => ({
+                paddingHorizontal: 20,
+                paddingVertical: 16,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: pressed ? C.dangerBg : 'transparent',
+              })}
+            >
+              <Text style={{ fontSize: 15, color: C.danger }}>
+                {t('settings.revokeConsent')}
+              </Text>
             </Pressable>
           </View>
         </Animated.View>

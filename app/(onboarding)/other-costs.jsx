@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import PillToggle from '../../components/onboarding/PillToggle';
 import DatePicker from '../../components/onboarding/DatePicker';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
 import LabeledInput from '../../components/onboarding/LabeledInput';
 import FrequencyPills from '../../components/onboarding/FrequencyPills';
+import InputGroup from '../../components/onboarding/InputGroup';
+import CostCard from '../../components/onboarding/CostCard';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
 
 const QUICK_ADD_CHIPS = [
   'groceries', 'mobilePhone', 'lifeInsurance', 'homeInsurance',
@@ -23,6 +26,7 @@ const FREQUENCIES = ['monthly', 'quarterly', 'annual'];
 export default function OtherCostsScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   const [validationError, setValidationError] = useState('');
   const [occupation, setOccupation] = useState(null);
@@ -31,14 +35,15 @@ export default function OtherCostsScreen() {
   const [removingCosts, setRemovingCosts] = useState(new Set());
 
   // ── Loaded data ──
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   useEffect(() => {
     (async () => {
       const o = await getData('pocketos_occupation');
       setOccupation(o);
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
     })();
   }, []);
 
@@ -102,30 +107,26 @@ export default function OtherCostsScreen() {
       }
     }
 
-    await setData('pocketos_other_costs', costs);
-    await setData('pocketos_onboarding', {
-      completed: false,
-      currentStep: 'other-costs',
-      percentComplete: 88,
+    await completeSection({
+      persist: async () => { await setData('pocketos_other_costs', costs); },
+      onboardingPatch: { completed: false, currentStep: 'other-costs', percentComplete: 88 },
+      nextRoute: '/(onboarding)/splash-debts',
     });
-
-    router.replace('/(onboarding)/splash-debts');
   };
 
   const progress = 88;
-  const progressLabel = t('onboarding.progress', { percent: progress });
+  const screenProgress = isEditMode ? undefined : progress;
 
   return (
     <QuestionScreen
       chapter={t('onboarding.otherCosts.chapter')}
       title={t('onboarding.otherCosts.q12.title')}
       helper={t('onboarding.otherCosts.q12.helper')}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
-      onBack={() => router.replace('/(onboarding)/splash-other-costs')}
+      onBack={() => leaveSection(() => router.replace('/(onboarding)/splash-other-costs'))}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
     >
       {/* Quick-add chips — toggle style */}
       <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 10 }}>
@@ -208,49 +209,28 @@ export default function OtherCostsScreen() {
       {/* Cost cards */}
       {costs.map((cost, idx) => (
         <AnimatedSlideIn key={idx} visible={visibleCosts[idx] !== false}>
-          <View style={{ padding: S.cardPad, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
-            {/* Header row with cost name + X delete button */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: C.primary }}>
-                {t(`onboarding.otherCosts.q12.costs.${cost.name}`)}
-              </Text>
-              <Pressable
-                onPress={() => removeCost(idx)}
-                style={({ pressed, hovered }) => ({
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: hovered
-                    ? C.dangerBg
-                    : pressed
-                      ? 'rgba(209,64,64,0.15)'
-                      : 'transparent',
-                })}
-              >
-                <Text style={{ fontSize: 18, color: C.danger, fontWeight: '600', lineHeight: 20 }}>{'✕'}</Text>
-              </Pressable>
-            </View>
-
-            {/* Amount label + input */}
-            <LabeledInput
-              label={t('onboarding.otherCosts.q12.amountLabel')}
-              value={cost.amount}
-              onChangeText={(v) => updateCost(idx, { amount: v })}
-              numeric
-              placeholder={t('onboarding.otherCosts.q12.amountPlaceholder')}
-              large
-              currency={currency}
-            />
-
-            {/* Frequency label + toggle */}
-            <FrequencyPills
-              options={FREQUENCIES}
-              value={cost.frequency}
-              onChange={(freq) => updateCost(idx, { frequency: freq })}
-              small
-            />
+          <CostCard
+            title={t(`onboarding.otherCosts.q12.costs.${cost.name}`)}
+            onRemove={() => removeCost(idx)}
+          >
+            <InputGroup nested>
+              <LabeledInput
+                label={t('onboarding.otherCosts.q12.amountLabel')}
+                value={cost.amount}
+                onChangeText={(v) => updateCost(idx, { amount: v })}
+                numeric
+                placeholder={t('onboarding.otherCosts.q12.amountPlaceholder')}
+                large
+                inGroup
+                currency={currency}
+              />
+              <FrequencyPills
+                options={FREQUENCIES}
+                value={cost.frequency}
+                onChange={(freq) => updateCost(idx, { frequency: freq })}
+                small
+              />
+            </InputGroup>
 
             {/* Due date */}
             <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: S.labelGap }}>
@@ -260,7 +240,7 @@ export default function OtherCostsScreen() {
               value={cost.dueDate}
               onChange={(v) => updateCost(idx, { dueDate: v })}
             />
-          </View>
+          </CostCard>
         </AnimatedSlideIn>
       ))}
     </QuestionScreen>

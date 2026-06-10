@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Box, Text } from '@gluestack-ui/themed';
+import PrimaryButton from '../../components/ui/PrimaryButton';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
+import { isConsentAccepted } from '../../lib/consent';
 import { C, R, T, S } from '../../constants/onboarding-theme';
 import FadeUpView from '../../components/onboarding/FadeUpView';
 
@@ -11,53 +13,41 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   const handleGetStarted = async () => {
-    router.push('/(onboarding)/consent');
+    if (await isConsentAccepted()) {
+      router.push('/(onboarding)/household');
+    } else {
+      router.push('/(onboarding)/consent');
+    }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: S.pagePadH }}>
       <FadeUpView style={{ alignItems: 'center', width: '100%', maxWidth: S.maxWidth }}>
-        {/* Brand title — "Pocket" thinner, "OS" bold */}
-        <Box style={{ marginBottom: 32, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 48, fontWeight: '300', letterSpacing: -0.5, color: C.primary }}>
-            Pocket
-          </Text>
-          <Text style={{ fontSize: 48, fontWeight: '700', letterSpacing: -0.5, color: C.primary }}>
-            OS
+        {/* Brand title */}
+        <Box style={{ marginBottom: 28, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ ...T.displayBrand, fontWeight: '700', letterSpacing: -1 }}>
+            {t('app.name')}
           </Text>
         </Box>
 
         {/* Motto */}
-        <Text
-          style={{ fontSize: 20, color: C.text, fontWeight: '500', textAlign: 'center', marginBottom: 12 }}
-        >
+        <Text style={{ ...T.welcomeTagline, textAlign: 'center', marginBottom: 12 }}>
           {t('app.tagline')}
         </Text>
 
-        {/* Brief project description */}
         <Text
-          style={{ fontSize: 15, lineHeight: 24, color: C.muted, textAlign: 'center', marginBottom: 32, paddingHorizontal: 24, maxWidth: 360 }}
+          style={{ ...T.welcomeBody, textAlign: 'center', marginBottom: 32, paddingHorizontal: 24, maxWidth: 360 }}
         >
           {t('app.description')}
         </Text>
 
-        {/* CTA Button */}
-        <Pressable
+        <PrimaryButton
           onPress={handleGetStarted}
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? C.accentPressed : C.accent,
-            paddingVertical: 16,
-            paddingHorizontal: 32,
-            borderRadius: R.button,
-            width: '100%',
-            maxWidth: 360,
-            alignItems: 'center',
-          })}
+          fullWidth={false}
+          style={{ width: '100%' }}
         >
-          <Text style={{ color: '#FFFFFF', ...T.btnPrimary }}>
-            {t('onboarding.welcome.cta')}
-          </Text>
-        </Pressable>
+          {t('onboarding.welcome.cta')}
+        </PrimaryButton>
       </FadeUpView>
     </View>
   );

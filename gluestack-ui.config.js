@@ -1,33 +1,66 @@
 /**
- * GlueStack UI Configuration
- * Customized to match PocketOS design system
- * 
- * This config is passed to GluestackUIProvider.
- * Structure: { tokens: { colors, space, radii, fontSizes, ... } }
+ * GlueStack UI Configuration — blue/navy Bida palette.
+ *
+ * Colour values mirror constants/onboarding-theme.js (C, R, S).
+ * When changing onboarding colours, update BOTH files to prevent drift.
+ *
+ * @see constants/onboarding-theme.js
  */
 export const config = {
   tokens: {
     colors: {
-      // Light mode colors (matching your existing palette)
-      bg: '#F4F3EF',
-      surface: '#FDFCFA',
-      primary: '#1D3557',
-      primaryHover: '#162b45',
-      accent: '#E8825A',
-      accentHover: '#d4714a',
-      positive: '#3A8C6E',
+      // Light mode — synced with onboarding-theme.js C.*
+      bg: '#EFF4FB',
+      surface: '#F8FAFF',
+      primary: '#1E3A5F',
+      primaryHover: '#162B45',
+      primaryPressed: '#162B45',
+      accent: '#2563EB',
+      accentHover: '#1D4ED8',
+      accentPressed: '#1D4ED8',
+      positive: '#10B981',
       warning: '#F59E0B',
-      danger: '#D14040',
+      danger: '#EF4444',
       debt: '#6B4FA0',
-      text: '#1A1A1A',
-      muted: '#7A7770',
-      border: '#E4E2DC',
-      divider: '#D8D5CE',
-      placeholder: '#C4C2BC',
+      text: '#1E3A5F',
+      muted: '#6B7A99',
+      border: '#D1DCF0',
+      divider: '#D1DCF0',
+      placeholder: '#6B7A99',
+      disabled: '#D1D5DB',
       white: '#FFFFFF',
       black: '#000000',
-      
-      // Dark mode colors
+
+      // Chip / pill states
+      chipSelectedBg: '#DBEAFE',
+      chipSelectedBorder: '#2563EB',
+      chipActive: 'rgba(30,58,95,0.1)',
+      chipActiveBorder: '#1E3A5F',
+
+      // Progress bar
+      progressTrack: '#D1DCF0',
+      progressFill: '#1E3A5F',
+
+      // Frequency pills
+      pillSelectedBg: '#1E3A5F',
+      pillSelectedText: '#FFFFFF',
+      pillUnselectedBg: '#EFF4FB',
+      pillUnselectedBorder: '#D1DCF0',
+      pillUnselectedText: '#6B7A99',
+
+      // Info / danger banners
+      dangerBg: '#FEE2E2',
+      dangerBorder: '#FCA5A5',
+      infoBg: '#DBEAFE',
+      infoBorder: '#93C5FD',
+      infoText: '#1E40AF',
+
+      // Add-another button
+      addBorder: '#2563EB',
+      addText: '#2563EB',
+      addPressed: '#EFF4FB',
+
+      // Dark mode (app shell)
       bgDark: '#0F1724',
       surfaceDark: '#172032',
       primaryDark: '#6366F1',
@@ -39,17 +72,13 @@ export const config = {
       mutedDark: '#8B95A8',
       borderDark: '#2A3650',
       dividerDark: '#2A3650',
-      
-      // Chip/pill states
-      chipActive: 'rgba(29,53,87,0.05)',
-      chipActiveBorder: '#1D3557',
       chipActiveDark: '#312E81',
       chipActiveBorderDark: '#6366F1',
-      
-      // Semantic aliases
-      error: '#D14040',
-      success: '#3A8C6E',
-      info: '#4338CA',
+
+      // Semantic aliases (gluestack defaults)
+      error: '#EF4444',
+      success: '#10B981',
+      info: '#2563EB',
     },
     space: {
       '1': 4,
@@ -65,71 +94,73 @@ export const config = {
       '10': 40,
       '12': 48,
       '16': 64,
-      'pagePadH': 20,
-      'pagePadV': 32,
-      'cardPad': 14,
-      'fieldGap': 16,
-      'labelGap': 6,
-      'sectionGap': 28,
+      pagePadH: 20,
+      pagePadV: 24,
+      cardPad: 16,
+      fieldGap: 16,
+      labelGap: 6,
+      sectionGap: 24,
+      navHeight: 56,
+      progressHeight: 3,
     },
     radii: {
-      'none': 0,
-      'xs': 4,
-      'sm': 6,
-      'md': 8,
-      'lg': 10,
-      'xl': 12,
+      none: 0,
+      xs: 4,
+      sm: 6,
+      md: 8,
+      lg: 10,
+      xl: 12,
       '2xl': 16,
       '3xl': 24,
-      'full': 9999,
-      'input': 10,
-      'card': 10,
-      'button': 10,
-      'pill': 99,
-      'chip': 12,
+      full: 9999,
+      input: 10,
+      card: 10,
+      button: 10,
+      pill: 99,
+      chip: 12,
     },
     fontSizes: {
-      'xs': 11,
-      'sm': 12,
-      'md': 14,
-      'lg': 15,
-      'xl': 17,
+      xs: 11,
+      sm: 12,
+      md: 14,
+      lg: 15,
+      xl: 17,
       '2xl': 20,
       '3xl': 24,
       '4xl': 28,
       '5xl': 32,
       '6xl': 40,
-      'display': 32,
-      'section': 24,
-      'body': 15,
-      'caption': 12,
-      'eyebrow': 11,
+      display: 32,
+      section: 24,
+      body: 15,
+      caption: 12,
+      eyebrow: 12,
     },
     fontWeights: {
-      'hairline': '100',
-      'thin': '200',
-      'light': '300',
-      'normal': '400',
-      'medium': '500',
-      'semibold': '600',
-      'bold': '700',
-      'extrabold': '800',
-      'black': '900',
+      hairline: '100',
+      thin: '200',
+      light: '300',
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700',
+      extrabold: '800',
+      black: '900',
     },
     lineHeights: {
-      'none': 1,
-      'tight': 1.25,
-      'snug': 1.375,
-      'normal': 1.5,
-      'relaxed': 1.625,
-      'loose': 2,
+      none: 1,
+      tight: 1.25,
+      snug: 1.375,
+      normal: 1.5,
+      relaxed: 1.625,
+      loose: 2,
     },
     letterSpacings: {
-      'xs': -0.4,
-      'sm': -0.2,
-      'md': 0,
-      'lg': 0.2,
-      'xl': 0.4,
+      xs: -0.4,
+      sm: -0.2,
+      md: 0,
+      lg: 0.2,
+      xl: 0.4,
       '2xl': 1.6,
     },
     borderWidths: {
@@ -137,6 +168,7 @@ export const config = {
       '1': 1,
       '1.5': 1.5,
       '2': 2,
+      '2.5': 2.5,
       '4': 4,
       '8': 8,
     },

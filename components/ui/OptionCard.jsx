@@ -1,90 +1,80 @@
-import React from 'react';
-import { Pressable, Box, HStack, Text } from '@gluestack-ui/themed';
+import { useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { Text } from '@gluestack-ui/themed';
+import { C, R } from '../../constants/onboarding-theme';
 
 /**
- * OptionCard - Selectable option card with icon/emoji
- * GlueStack UI version of the onboarding OptionCard component
- * 
- * @param {Object} props
- * @param {string} [props.icon] - Emoji or icon shown left of label
- * @param {string} props.label - Option label text
- * @param {boolean} props.selected - Whether this option is currently selected
- * @param {Function} props.onPress - Press handler
- * 
- * @example
- * <OptionCard
- *   icon="🏠"
- *   label="Own Home"
- *   selected={housingType === 'own'}
- *   onPress={() => setHousingType('own')}
- * />
+ * Selectable option card — blue/navy design system.
+ * Gluestack Text + RN Pressable for reliable hover on web.
  */
-export function OptionCard({ icon, label, selected, onPress }) {
+export function OptionCard({ icon, label, subtitle, selected, onPress, style }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <Pressable onPress={onPress}>
-      {({ hovered, pressed }) => (
-        <Box
-          py="$3.5"
-          px="$4.5"
-          borderRadius="$lg"
-          borderWidth="$1.5"
-          borderColor={
-            selected
-              ? '$primary'
-              : hovered
-                ? '$accent'
-                : '$border'
-          }
-          bg={
-            selected
-              ? 'rgba(29,53,87,0.05)'
-              : pressed
-                ? '$bg'
-                : hovered
-                  ? 'rgba(26,26,26,0.04)'
-                  : '$surface'
-          }
-          mb="$2.5"
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={subtitle ? `${label}, ${subtitle}` : label}
+      accessibilityState={{ selected }}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => ([{
+        minHeight: 44,
+        paddingVertical: subtitle ? 16 : 14,
+        paddingHorizontal: 18,
+        borderRadius: R.input,
+        borderWidth: 1.5,
+        borderColor: selected ? C.primary : hovered ? C.accent : C.border,
+        backgroundColor: selected
+          ? 'rgba(30,58,95,0.04)'
+          : hovered
+            ? 'rgba(37,99,235,0.04)'
+            : pressed
+              ? C.bg
+              : C.surface,
+        marginBottom: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+      }, style])}
+    >
+      {icon ? (
+        <Text style={{ fontSize: 20, lineHeight: 24, marginRight: 12 }}>{icon}</Text>
+      ) : null}
+
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text
+          style={{
+          fontSize: 15,
+          color: selected ? C.primary : C.text,
+          fontWeight: selected ? '600' : '400',
+          lineHeight: subtitle ? 20 : 22,
+        }}
+          numberOfLines={3}
         >
-          <HStack space="md" alignItems="center">
-            {icon && (
-              <Text fontSize="$xl" lineHeight="$xl">
-                {icon}
-              </Text>
-            )}
+          {label}
+        </Text>
+        {subtitle ? (
+          <Text style={{ fontSize: 13, color: C.muted, lineHeight: 18, marginTop: 2 }} numberOfLines={3}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
 
-            <Text
-              flex={1}
-              fontSize={14.5}
-              lineHeight={20}
-              color={selected ? '$primary' : '$text'}
-              fontWeight={selected ? '$medium' : '$normal'}
-            >
-              {label}
-            </Text>
-
-            {selected && (
-              <Box
-                w="$5"
-                h="$5"
-                borderRadius="$full"
-                bg="$primary"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Text
-                  color="$white"
-                  fontSize={11}
-                  lineHeight={14}
-                  fontWeight="$semibold"
-                >
-                  ✓
-                </Text>
-              </Box>
-            )}
-          </HStack>
-        </Box>
-      )}
+      {selected ? (
+        <View style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          backgroundColor: C.accent,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginLeft: 10,
+        }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 12, lineHeight: 14, fontWeight: '700' }}>
+            {'✓'}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }

@@ -1,5 +1,24 @@
 # GlueStack UI v3 Migration Guide
 
+## Current status (June 2026)
+
+**Onboarding migration: ~40% complete (visual layer).**
+
+| Layer | Status |
+|-------|--------|
+| `gluestack-ui.config.js` | Synced to blue/navy palette — mirrors `constants/onboarding-theme.js` |
+| `components/ui/FormInput` | Full `LabeledInput` parity (currency, large, inCard, frequency) |
+| `components/ui/PrimaryButton` | Used in `QuestionScreen`, `SplashScreen`, welcome, consent |
+| `components/ui/OptionCard` | Production API via thin wrapper in `components/onboarding/OptionCard.jsx` |
+| `components/onboarding/LabeledInput` | Thin re-export of `FormInput` — all 12+ screens unchanged import path |
+| Post-onboarding `app/(app)/*` | NativeWind + `tailwind.config.js` (unchanged) |
+
+**Source of truth for onboarding colours:** `constants/onboarding-theme.js` (inline styles) + `gluestack-ui.config.js` (provider tokens). Keep both in sync.
+
+**Not migrated yet:** `DatePicker`, `PillToggle`/`FrequencyPills`, `CostCard` shell (RN View), full gluestack CLI v3 copy-paste components.
+
+---
+
 This guide explains how to migrate PocketOS from custom components to GlueStack UI v3.
 
 ## What is GlueStack UI?
@@ -32,10 +51,10 @@ export const config = {
   ...defaultConfig,
   tokens: {
     colors: {
-      bg: '#F4F3EF',
-      surface: '#FDFCFA',
-      primary: '#1D3557',
-      accent: '#E8825A',
+      bg: '#EFF4FB',
+      surface: '#F8FAFF',
+      primary: '#1E3A5F',
+      accent: '#2563EB',
       // ... all your existing colors
     },
     // ... spacing, radii, etc.

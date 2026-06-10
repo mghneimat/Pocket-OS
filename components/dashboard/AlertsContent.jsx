@@ -1,0 +1,113 @@
+import { View, Pressable } from 'react-native';
+import { Text } from '@gluestack-ui/themed';
+import { useRouter } from 'expo-router';
+import { useI18n } from '../../lib/i18n';
+import { dismissAlert, snoozeAlert } from '../../lib/alerts';
+import { C, R, T } from '../../constants/onboarding-theme';
+import SurfaceCard from '../ui/SurfaceCard';
+
+const URGENCY_COLORS = {
+  high: C.danger,
+  medium: C.infoText,
+  low: C.muted,
+};
+
+export default function AlertsContent({ bundle, onRefresh }) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const active = bundle.alerts.filter((a) => a.status === 'active');
+
+  const handleDismiss = async (id) => {
+    await dismissAlert(id);
+    onRefresh();
+  };
+
+  const handleSnooze = async (id) => {
+    await snoozeAlert(id, 7);
+    onRefresh();
+  };
+
+  if (!active.length) {
+    return (
+      <SurfaceCard>
+        <Text style={{ ...T.body, color: C.muted, textAlign: 'center' }}>
+          {t('dashboard.alertsScreen.empty')}
+        </Text>
+      </SurfaceCard>
+    );
+  }
+
+  return (
+    <View style={{ gap: 12 }}>
+      {active.map((alert) => (
+        <SurfaceCard key={alert.id}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+            <View style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: URGENCY_COLORS[alert.urgency] || C.muted,
+              marginTop: 6,
+            }} />
+            <Text style={{ flex: 1, fontSize: 15, lineHeight: 22, color: C.primary }}>
+              {t(alert.messageKey, alert.messageParams)}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+            {alert.actionRoute ? (
+              <Pressable
+                onPress={() => router.push(alert.actionRoute)}
+                accessibilityRole="button"
+                style={({ pressed }) => ({
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: R.input,
+                  backgroundColor: pressed ? C.accentPressed : C.accent,
+                  minHeight: 36,
+                  justifyContent: 'center',
+                })}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#FFFFFF' }}>
+                  {t('dashboard.alertsScreen.review')}
+                </Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => handleSnooze(alert.id)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                borderRadius: R.input,
+                borderWidth: 1,
+                borderColor: C.border,
+                opacity: pressed ? 0.7 : 1,
+                minHeight: 36,
+                justifyContent: 'center',
+              })}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: C.muted }}>
+                {t('dashboard.alertsScreen.snooze')}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleDismiss(alert.id)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                opacity: pressed ? 0.7 : 1,
+                minHeight: 36,
+                justifyContent: 'center',
+              })}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: C.danger }}>
+                {t('dashboard.alertsScreen.dismiss')}
+              </Text>
+            </Pressable>
+          </View>
+        </SurfaceCard>
+      ))}
+    </View>
+  );
+}

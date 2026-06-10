@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import PillToggle from '../../components/onboarding/PillToggle';
 import DatePicker from '../../components/onboarding/DatePicker';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
@@ -13,6 +13,12 @@ import LabeledInput from '../../components/onboarding/LabeledInput';
 import YesNoToggle from '../../components/onboarding/YesNoToggle';
 import FrequencyPills from '../../components/onboarding/FrequencyPills';
 import AddAnotherButton from '../../components/onboarding/AddAnotherButton';
+import AnimatedRow from '../../components/onboarding/AnimatedRow';
+import CostCard from '../../components/onboarding/CostCard';
+import InputGroup from '../../components/onboarding/InputGroup';
+import RemoveButton from '../../components/onboarding/RemoveButton';
+import ScrollFocusAnchor from '../../components/onboarding/ScrollFocusAnchor';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
 
 const PET_TYPES = ['dog', 'cat', 'bird', 'other'];
 const FREQUENCIES = ['monthly', 'quarterly', 'annual'];
@@ -20,9 +26,11 @@ const FREQUENCIES = ['monthly', 'quarterly', 'annual'];
 export default function PetsScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   // ── Loaded data ──
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   const [step, setStep] = useState('q10');
   const [validationError, setValidationError] = useState('');
@@ -33,6 +41,8 @@ export default function PetsScreen() {
   // Q10a — Pet details
   const [pets, setPets] = useState([]);
   const [petIndex, setPetIndex] = useState(0);
+  const [focusToken, setFocusToken] = useState(null);
+  const finalizedPetRemovals = useRef(new Set());
 
   const currentPet = pets[petIndex];
 
@@ -40,12 +50,26 @@ export default function PetsScreen() {
   useEffect(() => {
     (async () => {
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
     })();
   }, []);
 
+  const persistPets = async () => {
+    const data = hasPets === false ? [] : pets;
+    await completeSection({
+      persist: async () => { await setData('pocketos_pets', data); },
+      onboardingPatch: { completed: false, currentStep: 'pets', percentComplete: 80 },
+      nextRoute: '/(onboarding)/splash-subscriptions',
+    });
+  };
+
   const handleContinue = async () => {
     setValidationError('');
+
+    if (isEditMode) {
+      await persistPets();
+      return;
+    }
 
     if (step === 'q10') {
       if (hasPets === null) {
@@ -57,38 +81,28 @@ export default function PetsScreen() {
         setPetIndex(0);
         setStep('q10a');
       } else {
-        await setData('pocketos_pets', []);
-        await setData('pocketos_onboarding', {
-          completed: false,
-          currentStep: 'pets',
-          percentComplete: 80,
+        await completeSection({
+          persist: async () => { await setData('pocketos_pets', []); },
+          onboardingPatch: { completed: false, currentStep: 'pets', percentComplete: 80 },
+          nextRoute: '/(onboarding)/splash-subscriptions',
         });
-        router.replace('/(onboarding)/splash-subscriptions');
       }
       return;
     }
 
     if (step === 'q10a') {
-      // Validate current pet
-      if (!currentPet.type) {
+      const invalidIdx = pets.findIndex((p) => !p.type);
+      if (invalidIdx !== -1) {
+        setPetIndex(invalidIdx);
         setValidationError(t('onboarding.pets.q10a.validation'));
         return;
       }
 
-      // If there are more pets to configure, go to next
-      if (petIndex < pets.length - 1) {
-        setPetIndex(petIndex + 1);
-        return;
-      }
-
-      // All pets configured — save and continue
-      await setData('pocketos_pets', pets);
-      await setData('pocketos_onboarding', {
-        completed: false,
-        currentStep: 'pets',
-        percentComplete: 80,
+      await completeSection({
+        persist: async () => { await setData('pocketos_pets', pets); },
+        onboardingPatch: { completed: false, currentStep: 'pets', percentComplete: 80 },
+        nextRoute: '/(onboarding)/splash-subscriptions',
       });
-      router.replace('/(onboarding)/splash-subscriptions');
       return;
     }
   };
@@ -96,16 +110,11 @@ export default function PetsScreen() {
   const handleBack = async () => {
     setValidationError('');
     if (step === 'q10a') {
-      if (petIndex > 0) {
-        setPetIndex(petIndex - 1);
-      } else {
-        setStep('q10');
-      }
+      setStep('q10');
       return;
     }
-    // Save pets data before navigating back
     await setData('pocketos_pets', pets);
-    router.replace('/(onboarding)/splash-pets');
+    leaveSection(() => router.replace('/(onboarding)/splash-pets'));
   };
 
   const updatePet = (idx, updates) => {
@@ -115,7 +124,10 @@ export default function PetsScreen() {
   };
 
   const addPet = () => {
+    const id = `pet_${Date.now()}`;
     const newPet = {
+      id,
+      visible: true,
       type: null,
       name: '',
       foodAmount: '',
@@ -136,18 +148,32 @@ export default function PetsScreen() {
     };
     setPets([...pets, newPet]);
     setPetIndex(pets.length);
+    setFocusToken(id);
   };
 
   const removePet = (idx) => {
-    const newPets = pets.filter((_, i) => i !== idx);
-    setPets(newPets);
-    if (petIndex >= newPets.length && petIndex > 0) {
-      setPetIndex(petIndex - 1);
-    }
+    setPets((prev) => prev.map((p, i) => (i === idx ? { ...p, visible: false } : p)));
+  };
+
+  const finalizeRemovePet = (idx) => {
+    const pet = pets[idx];
+    const key = pet?.id || String(idx);
+    if (finalizedPetRemovals.current.has(key)) return;
+    finalizedPetRemovals.current.add(key);
+
+    setPets((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      setPetIndex((current) => {
+        if (current >= next.length && current > 0) return next.length - 1;
+        if (current === idx && idx > 0) return idx - 1;
+        return current;
+      });
+      return next;
+    });
   };
 
   const progress = 80;
-  const progressLabel = t('onboarding.progress', { percent: progress });
+  const screenProgress = isEditMode ? undefined : progress;
 
   const renderQ10 = () => (
     <View>
@@ -235,27 +261,25 @@ export default function PetsScreen() {
       : 'otherCostPlaceholder';
     return (
       <AnimatedSlideIn visible={isActive} key={section.key}>
-        {/* Proper label above the input */}
-        <Text style={{ fontSize: 13, color: C.primary, fontWeight: '600', marginBottom: 6 }}>
-          {t(section.labelKey)}
-        </Text>
-        <LabeledInput
-          label={t(section.labelKey)}
-          value={pet[section.amountField]}
-          onChangeText={(v) => updatePet(idx, { [section.amountField]: v })}
-          numeric
-          placeholder={t(`onboarding.pets.q10a.${placeholderKey}`)}
-          large
-          containerStyle={{ marginBottom: 8 }}
-          currency={currency}
-        />
-        <FrequencyPills
-          options={FREQUENCIES}
-          value={pet[section.freqField]}
-          onChange={(freq) => updatePet(idx, { [section.freqField]: freq })}
-          small
-          containerStyle={{ marginBottom: 16 }}
-        />
+        <CostCard title={t(section.labelKey)} style={{ marginBottom: 16 }}>
+          <InputGroup nested label={t('onboarding.pets.q10a.amountLabel')}>
+            <LabeledInput
+              value={pet[section.amountField]}
+              onChangeText={(v) => updatePet(idx, { [section.amountField]: v })}
+              numeric
+              placeholder={t(`onboarding.pets.q10a.${placeholderKey}`)}
+              large
+              inGroup
+              currency={currency}
+            />
+            <FrequencyPills
+              options={FREQUENCIES}
+              value={pet[section.freqField]}
+              onChange={(freq) => updatePet(idx, { [section.freqField]: freq })}
+              small
+            />
+          </InputGroup>
+        </CostCard>
       </AnimatedSlideIn>
     );
   };
@@ -266,21 +290,7 @@ export default function PetsScreen() {
         <Text style={{ fontSize: 15, fontWeight: '600', color: C.primary }}>
           {t('onboarding.pets.q10a.title', { n: idx + 1 })}
         </Text>
-        {pets.length > 1 && (
-          <Pressable
-            onPress={() => removePet(idx)}
-            style={({ pressed, hovered }) => ({
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: hovered ? 'rgba(209,64,64,0.1)' : pressed ? 'rgba(209,64,64,0.15)' : 'transparent',
-            })}
-          >
-            <Text style={{ fontSize: 18, color: '#D14040', fontWeight: '600', lineHeight: 20 }}>✕</Text>
-          </Pressable>
-        )}
+        {pets.length > 1 ? <RemoveButton onPress={() => removePet(idx)} /> : null}
       </View>
 
       {/* Pet type pills */}
@@ -331,16 +341,17 @@ export default function PetsScreen() {
         containerStyle={{ marginBottom: 12 }}
       />
       <AnimatedSlideIn visible={pet.hasInsurance === true}>
-        <LabeledInput
-          label={t('onboarding.pets.q10a.insurancePremiumLabel')}
-          value={pet.insurancePremium}
-          onChangeText={(v) => updatePet(idx, { insurancePremium: v })}
-          numeric
-          placeholder={t('onboarding.pets.q10a.insurancePremiumPlaceholder')}
-          large
-          containerStyle={{ marginBottom: 12 }}
-          currency={currency}
-        />
+        <InputGroup label={t('onboarding.pets.q10a.insurancePremiumLabel')}>
+          <LabeledInput
+            value={pet.insurancePremium}
+            onChangeText={(v) => updatePet(idx, { insurancePremium: v })}
+            numeric
+            placeholder={t('onboarding.pets.q10a.insurancePremiumPlaceholder')}
+            large
+            inGroup
+            currency={currency}
+          />
+        </InputGroup>
         <Text style={{ fontSize: 13, color: C.primary, fontWeight: '600', marginBottom: 6 }}>
           {t('onboarding.pets.q10a.insuranceRenewalLabel')}
         </Text>
@@ -373,15 +384,17 @@ export default function PetsScreen() {
             </Pressable>
           </View>
           <AnimatedSlideIn visible={pet.dogTax}>
-            <LabeledInput
-              label={t('onboarding.pets.q10a.dogTaxLabel')}
-              value={pet.dogTaxAmount}
-              onChangeText={(v) => updatePet(idx, { dogTaxAmount: v })}
-              numeric
-              placeholder="1 500"
-              large
-              currency={currency}
-            />
+            <InputGroup label={t('onboarding.pets.q10a.dogTaxLabel')}>
+              <LabeledInput
+                value={pet.dogTaxAmount}
+                onChangeText={(v) => updatePet(idx, { dogTaxAmount: v })}
+                numeric
+                placeholder="1 500"
+                large
+                inGroup
+                currency={currency}
+              />
+            </InputGroup>
             <Text style={{ ...T.caption, color: C.muted, marginTop: 4 }}>{t('onboarding.pets.q10a.dogTaxHelper')}</Text>
           </AnimatedSlideIn>
         </View>
@@ -396,15 +409,34 @@ export default function PetsScreen() {
       <View>
         {/* Stepper indicator */}
         {pets.length > 1 && (
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
-            {pets.map((_, idx) => (
-              <View
-                key={idx}
-                style={{
-                  width: 8, height: 8, borderRadius: 4,
-                  backgroundColor: idx === petIndex ? C.primary : C.divider,
+          <View style={{ flexDirection: 'row', borderRadius: R.input, borderWidth: 1, borderColor: C.border, overflow: 'hidden', marginBottom: 16 }}>
+            {pets.map((pet, idx) => (
+              <AnimatedRow
+                key={pet.id || idx}
+                visible={pet.visible !== false}
+                style={{ flex: 1, marginBottom: 0 }}
+                onAnimationEnd={() => {
+                  if (pet.visible === false) finalizeRemovePet(idx);
                 }}
-              />
+              >
+                <Pressable
+                  onPress={() => { setPetIndex(idx); setValidationError(''); }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    backgroundColor: petIndex === idx ? C.chipSelectedBg : 'transparent',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 13,
+                    fontWeight: '500',
+                    color: petIndex === idx ? C.primary : C.muted,
+                  }}>
+                    {pet.name || t('onboarding.pets.q10a.petLabel', { n: String(idx + 1) })}
+                  </Text>
+                </Pressable>
+              </AnimatedRow>
             ))}
           </View>
         )}
@@ -413,12 +445,21 @@ export default function PetsScreen() {
           {t('onboarding.pets.q10a.helper')}
         </Text>
 
-        {renderPetForm(currentPet, petIndex)}
+        <ScrollFocusAnchor focusId={currentPet.id} focusToken={focusToken}>
+          <AnimatedRow
+            visible={currentPet.visible !== false}
+            onAnimationEnd={() => {
+              if (currentPet.visible === false) finalizeRemovePet(petIndex);
+            }}
+          >
+            {renderPetForm(currentPet, petIndex)}
+          </AnimatedRow>
+        </ScrollFocusAnchor>
 
-        {/* Add another pet button */}
         <AddAnotherButton
           label={t('onboarding.pets.q10a.addPet')}
           onPress={addPet}
+          style={{ marginTop: 8, width: '100%', alignSelf: 'stretch' }}
         />
       </View>
     );
@@ -433,12 +474,11 @@ export default function PetsScreen() {
     <QuestionScreen
       chapter={t('onboarding.pets.chapter')}
       title={stepTitles[step]}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
       onBack={handleBack}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
       animationKey={step}
     >
       {step === 'q10' && renderQ10()}

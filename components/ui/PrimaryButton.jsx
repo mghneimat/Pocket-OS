@@ -1,66 +1,69 @@
-import React from 'react';
-import { Button, ButtonText, ButtonIcon } from '@gluestack-ui/themed';
+import { useState } from 'react';
+import { Pressable } from 'react-native';
+import { Text } from '@gluestack-ui/themed';
+import { C, R, T } from '../../constants/onboarding-theme';
 
 /**
- * PrimaryButton - Simplified button wrapper for GlueStack UI
- * 
- * @param {Object} props
- * @param {React.ReactNode} props.children - Button text
- * @param {Function} [props.onPress] - Press handler
- * @param {'sm'|'md'|'lg'} [props.size='md'] - Button size
- * @param {'primary'|'secondary'|'accent'|'outline'} [props.variant='primary'] - Button variant
- * @param {boolean} [props.disabled=false] - Disabled state
- * @param {React.ReactNode} [props.icon] - Optional icon component
- * @param {'left'|'right'} [props.iconPosition='left'] - Icon position
- * 
- * @example
- * <PrimaryButton onPress={handleContinue}>
- *   Continue
- * </PrimaryButton>
- * 
- * @example
- * <PrimaryButton variant="outline" size="sm">
- *   Cancel
- * </PrimaryButton>
+ * Onboarding-styled primary CTA — gluestack Text + Pressable for hover/press control.
  */
 export function PrimaryButton({
   children,
   onPress,
-  size = 'md',
-  variant = 'primary',
   disabled = false,
-  icon,
-  iconPosition = 'left',
-  ...props
+  fullWidth = true,
+  variant = 'primary',
+  style,
+  textStyle,
+  accessibilityState,
+  accessibilityLabel,
 }) {
-  // Map variants to GlueStack UI actions
-  const actionMap = {
-    primary: 'primary',
-    secondary: 'secondary',
-    accent: 'positive', // Using positive for accent
-    outline: 'secondary',
-  };
+  const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
 
-  const variantMap = {
-    primary: 'solid',
-    secondary: 'outline',
-    accent: 'solid',
-    outline: 'outline',
-  };
+  const bgColor = disabled
+    ? C.disabled
+    : variant === 'outline'
+    ? 'transparent'
+    : pressed
+    ? C.accentPressed
+    : C.accent;
 
   return (
-    <Button
-      size={size}
-      variant={variantMap[variant]}
-      action={actionMap[variant]}
+    <Pressable
       onPress={onPress}
-      isDisabled={disabled}
-      {...props}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? (typeof children === 'string' ? children : undefined)}
+      accessibilityState={accessibilityState}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={[
+        {
+          flex: fullWidth ? 1 : undefined,
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          borderRadius: R.button,
+          backgroundColor: bgColor,
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: hovered && !disabled ? 0.92 : 1,
+          borderWidth: variant === 'outline' ? 1.5 : 0,
+          borderColor: variant === 'outline' ? C.border : 'transparent',
+        },
+        style,
+      ]}
     >
-      {icon && iconPosition === 'left' && <ButtonIcon as={icon} />}
-      <ButtonText>{children}</ButtonText>
-      {icon && iconPosition === 'right' && <ButtonIcon as={icon} />}
-    </Button>
+      <Text
+        style={[
+          variant === 'outline' ? T.btnSkip : { ...T.btnPrimary, color: C.pillSelectedText },
+          textStyle,
+        ]}
+      >
+        {children}
+      </Text>
+    </Pressable>
   );
 }
 

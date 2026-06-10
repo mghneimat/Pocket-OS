@@ -1,166 +1,27 @@
-import { useState, useRef } from 'react';
-import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { View, TextInput, Pressable } from 'react-native';
+import { webFocusRing } from '../../lib/a11y';
+import { Text } from '@gluestack-ui/themed';
 import { useI18n } from '../../lib/i18n';
-import { C, R } from '../../constants/onboarding-theme';
-
-const MONTHS = [
-  'january', 'february', 'march', 'april', 'may', 'june',
-  'july', 'august', 'september', 'october', 'november', 'december',
-];
-
-/**
- * Generate an array of numbers from `start` to `end` inclusive.
- */
-function range(start, end) {
-  const arr = [];
-  for (let i = start; i <= end; i++) arr.push(i);
-  return arr;
-}
+import { C, R, S, T } from '../../constants/onboarding-theme';
+import {
+  buildDateSuggestions,
+  formatDateDisplay,
+  parseLooseDate,
+} from '../../lib/datePicker';
+import { elevationShadow } from '../../lib/shadow';
 
 /**
- * Get the number of days in a given month/year.
- */
-function daysInMonth(month, year) {
-  return new Date(year, month, 0).getDate();
-}
-
-/**
- * A dropdown selector with a chevron indicator.
- * Opens a Modal-based overlay list positioned near the trigger.
- */
-function Dropdown({ label, value, options, onSelect, placeholder }) {
-  const [open, setOpen] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-  const triggerRef = useRef(null);
-  const [triggerLayout, setTriggerLayout] = useState(null);
-
-  const displayValue = value != null ? String(value) : '';
-
-  const handleOpen = () => {
-    if (triggerRef.current) {
-      triggerRef.current.measureInWindow((x, y, width, height) => {
-        setTriggerLayout({ x, y, width, height });
-        setOpen(true);
-      });
-    }
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <Pressable
-        ref={triggerRef}
-        onPress={handleOpen}
-        onHoverIn={() => setHovered(true)}
-        onHoverOut={() => setHovered(false)}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-        style={{
-          paddingVertical: 12,
-          paddingHorizontal: 12,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: C.border,
-          backgroundColor: hovered ? C.bg : pressed ? C.addPressed : C.surface,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: 44,
-        }}
-      >
-        <Text style={{
-          fontSize: 14,
-          color: displayValue ? C.text : C.placeholder,
-          fontWeight: displayValue ? '500' : '400',
-        }}>
-          {displayValue || placeholder}
-        </Text>
-        <Text style={{ fontSize: 10, color: C.muted, marginLeft: 4 }}>▼</Text>
-      </Pressable>
-
-      <Modal
-        visible={open}
-        transparent
-        animationType="none"
-        onRequestClose={() => setOpen(false)}
-      >
-        {/* Full-screen backdrop */}
-        <Pressable
-          style={{ flex: 1 }}
-          onPress={() => setOpen(false)}
-        >
-          {/* Dropdown list positioned near the trigger */}
-          {triggerLayout && (
-            <View
-              style={{
-                position: 'absolute',
-                top: triggerLayout.y + triggerLayout.height + 2,
-                left: triggerLayout.x,
-                width: triggerLayout.width,
-                backgroundColor: C.surface,
-                borderRadius: 12,
-                maxHeight: 200,
-                overflow: 'hidden',
-                borderWidth: 1,
-                borderColor: C.border,
-                elevation: 8,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 8,
-              }}
-            >
-              <ScrollView
-                style={{ maxHeight: 200 }}
-                bounces={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {options.map((opt) => {
-                  const isSelected = opt === value;
-                  return (
-                    <Pressable
-                      key={opt}
-                      onPress={() => { onSelect(opt); setOpen(false); }}
-                      style={({ pressed: btnPressed }) => ({
-                        paddingVertical: 12,
-                        paddingHorizontal: 16,
-                        backgroundColor: isSelected
-                          ? C.chipSelectedBg
-                          : btnPressed
-                            ? C.bg
-                            : 'transparent',
-                        borderBottomWidth: 1,
-                        borderBottomColor: C.border,
-                      })}
-                    >
-                      <Text style={{
-                        fontSize: 14,
-                        color: isSelected ? C.primary : C.text,
-                        fontWeight: isSelected ? '600' : '400',
-                      }}>
-                        {label ? label(opt) : String(opt)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
-        </Pressable>
-      </Modal>
-    </View>
-  );
-}
-
-/**
- * Reusable DatePicker with three dropdowns: Day, Month (full name), Year.
+ * Typeable date field with autocomplete suggestions.
+ * Stores DD/MM/YYYY (with day) or MM/YYYY (month/year only).
  *
  * @param {Object} props
- * @param {string} props.value - Current date value in "DD/MM/YYYY" or "MM/YYYY" format (or empty string)
- * @param {Function} props.onChange - Called with the new date string
- * @param {boolean} [props.showDay=true] - Whether to show the day dropdown (false for month/year only)
- * @param {number} [props.yearStart] - Start year for the year dropdown (default: current year - 10)
- * @param {number} [props.yearEnd] - End year for the year dropdown (default: current year + 10)
+ * @param {string} props.value - Stored date string
+ * @param {Function} props.onChange - Called with canonical date string
+ * @param {boolean} [props.showDay=true]
+ * @param {number} [props.yearStart]
+ * @param {number} [props.yearEnd]
+ * @param {boolean} [props.inGroup] - Flat styling inside InputGroup card
  */
 export default function DatePicker({
   value,
@@ -168,104 +29,155 @@ export default function DatePicker({
   showDay = true,
   yearStart,
   yearEnd,
+  inGroup = false,
 }) {
   const { t } = useI18n();
+  const [focused, setFocused] = useState(false);
+  const [draft, setDraft] = useState('');
+  const selectingRef = useRef(false);
 
-  const now = new Date();
-  const currentYear = now.getFullYear();
+  const currentYear = new Date().getFullYear();
   const startYear = yearStart ?? currentYear - 10;
   const endYear = yearEnd ?? currentYear + 10;
 
-  // Parse current value
-  let day = null;
-  let month = null;
-  let year = null;
+  const placeholder = showDay
+    ? t('common.datePicker.placeholderFull')
+    : t('common.datePicker.placeholderMonthYear');
 
-  if (value) {
-    const parts = value.split('/');
-    if (showDay && parts.length === 3) {
-      day = parseInt(parts[0], 10) || null;
-      month = parseInt(parts[1], 10) || null;
-      year = parseInt(parts[2], 10) || null;
-    } else if (parts.length === 2) {
-      month = parseInt(parts[0], 10) || null;
-      year = parseInt(parts[1], 10) || null;
+  useEffect(() => {
+    if (!focused) {
+      setDraft(value ? formatDateDisplay(value, showDay, t) : '');
     }
-  }
+  }, [value, focused, showDay, t]);
 
-  const days = range(1, 31);
-  const years = range(startYear, endYear);
-
-  // Month options with full name labels
-  const monthOptions = MONTHS.map((m, idx) => ({
-    value: idx + 1,
-    label: t(`common.months.${m}`),
-  }));
-
-  const handleDaySelect = (d) => {
-    const maxDay = month && year ? daysInMonth(month, year) : 31;
-    const clampedDay = Math.min(d, maxDay);
-    const dayStr = String(clampedDay).padStart(2, '0');
-    const monthStr = month ? String(month).padStart(2, '0') : '';
-    const yearStr = year ? String(year) : '';
-    if (showDay) {
-      onChange(`${dayStr}/${monthStr}/${yearStr}`);
-    } else {
-      onChange(`${monthStr}/${yearStr}`);
+  const suggestions = useMemo(() => {
+    if (!focused) return [];
+    const query = draft || value;
+    if (!query.trim()) {
+      return buildDateSuggestions({
+        query: String(new Date().getMonth() + 1),
+        showDay,
+        yearStart: startYear,
+        yearEnd: endYear,
+        t,
+      });
     }
-  };
+    return buildDateSuggestions({
+      query,
+      showDay,
+      yearStart: startYear,
+      yearEnd: endYear,
+      t,
+    });
+  }, [draft, value, focused, showDay, startYear, endYear, t]);
 
-  const handleMonthSelect = (m) => {
-    const monthStr = String(m).padStart(2, '0');
-    const yearStr = year ? String(year) : '';
-    // Clamp day if needed
-    const maxDay = daysInMonth(m, year || currentYear);
-    const clampedDay = day ? Math.min(day, maxDay) : null;
-    const dayStr = clampedDay ? String(clampedDay).padStart(2, '0') : '';
-    if (showDay) {
-      onChange(`${dayStr}/${monthStr}/${yearStr}`);
-    } else {
-      onChange(`${monthStr}/${yearStr}`);
+  const commitDraft = () => {
+    const parsed = parseLooseDate(draft, showDay, t);
+    if (parsed) {
+      onChange(parsed);
+      setDraft(formatDateDisplay(parsed, showDay, t));
+    } else if (!draft.trim()) {
+      onChange('');
+      setDraft('');
+    } else if (value) {
+      setDraft(formatDateDisplay(value, showDay, t));
     }
   };
 
-  const handleYearSelect = (y) => {
-    const yearStr = String(y);
-    const monthStr = month ? String(month).padStart(2, '0') : '';
-    // Clamp day for Feb in leap years etc.
-    const maxDay = month ? daysInMonth(month, y) : 31;
-    const clampedDay = day ? Math.min(day, maxDay) : null;
-    const dayStr = clampedDay ? String(clampedDay).padStart(2, '0') : '';
-    if (showDay) {
-      onChange(`${dayStr}/${monthStr}/${yearStr}`);
-    } else {
-      onChange(`${monthStr}/${yearStr}`);
-    }
+  const selectSuggestion = (item) => {
+    onChange(item.value);
+    setDraft(item.label);
+    setFocused(false);
   };
+
+  const inputStyle = inGroup
+    ? {
+        backgroundColor: C.bg,
+        borderWidth: 1,
+        borderColor: focused ? C.accent : C.border,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 15,
+        color: C.text,
+        minHeight: 44,
+      }
+    : {
+        backgroundColor: C.surface,
+        borderWidth: 2,
+        borderColor: focused ? C.accent : C.border,
+        borderRadius: R.input,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        fontSize: 17,
+        color: C.text,
+        minHeight: 48,
+      };
 
   return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
-      {showDay && (
-        <Dropdown
-          value={day}
-          options={days}
-          onSelect={handleDaySelect}
-          placeholder={t('common.datePicker.day')}
-        />
-      )}
-      <Dropdown
-        value={month}
-        options={monthOptions.map(m => m.value)}
-        label={(v) => t(`common.months.${MONTHS[v - 1]}`)}
-        onSelect={handleMonthSelect}
-        placeholder={t('common.datePicker.month')}
+    <View style={{ marginBottom: inGroup ? 0 : S.fieldGap }}>
+      <TextInput
+        value={draft}
+        onChangeText={setDraft}
+        placeholder={placeholder}
+        placeholderTextColor={C.placeholder}
+        accessibilityLabel={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setTimeout(() => {
+            if (!selectingRef.current) {
+              commitDraft();
+              setFocused(false);
+            }
+            selectingRef.current = false;
+          }, 120);
+        }}
+        style={{
+          ...inputStyle,
+          outlineStyle: 'none',
+          outlineWidth: 0,
+          ...webFocusRing(focused),
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
       />
-      <Dropdown
-        value={year}
-        options={years}
-        onSelect={handleYearSelect}
-        placeholder={t('common.datePicker.year')}
-      />
+
+      {focused && suggestions.length > 0 ? (
+        <View style={{
+          marginTop: 6,
+          backgroundColor: C.surface,
+          borderRadius: R.input,
+          borderWidth: 1,
+          borderColor: C.border,
+          overflow: 'hidden',
+          ...elevationShadow({ offsetY: 4, blur: 8, opacity: 0.08 }),
+        }}>
+          {suggestions.map((item) => (
+            <Pressable
+              key={item.value}
+              onPressIn={() => { selectingRef.current = true; }}
+              onPress={() => selectSuggestion(item)}
+              style={({ pressed }) => ({
+                paddingVertical: 12,
+                paddingHorizontal: 14,
+                backgroundColor: pressed ? C.bg : 'transparent',
+                borderBottomWidth: 1,
+                borderBottomColor: C.border,
+              })}
+            >
+              <Text style={{ fontSize: 14, color: C.text, fontWeight: '500' }}>
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      {focused ? (
+        <Text style={{ ...T.caption, color: C.muted, marginTop: 6 }}>
+          {t('common.datePicker.hint')}
+        </Text>
+      ) : null}
     </View>
   );
 }

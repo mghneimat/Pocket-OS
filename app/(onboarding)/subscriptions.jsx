@@ -1,18 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useI18n } from '../../lib/i18n';
 import { getData, setData } from '../../lib/storage';
+import { getCurrencySymbol } from '../../lib/currency';
 import { toMonthly, formatCurrency } from '../../lib/finance';
 import { C, S, T, R } from '../../constants/onboarding-theme';
 import QuestionScreen from '../../components/onboarding/QuestionScreen';
-import PlaceholderIllustration from '../../components/onboarding/PlaceholderIllustration';
 import PillToggle from '../../components/onboarding/PillToggle';
 import DatePicker from '../../components/onboarding/DatePicker';
 import { SERVICE_ICON_COMPONENTS } from '../../components/onboarding/ServiceIcons';
 import AnimatedSlideIn from '../../components/onboarding/AnimatedSlideIn';
 import LabeledInput from '../../components/onboarding/LabeledInput';
 import FrequencyPills from '../../components/onboarding/FrequencyPills';
+import InputGroup from '../../components/onboarding/InputGroup';
+import CostCard from '../../components/onboarding/CostCard';
+import { useSectionExit } from '../../lib/finishOnboardingSection';
 
 const QUICK_ADD_CHIPS = [
   'netflix', 'primeVideo', 'disneyPlus', 'appleTvPlus', 'hboMax',
@@ -27,9 +30,11 @@ const FREQUENCIES = ['monthly', 'quarterly', 'annual'];
 export default function SubscriptionsScreen() {
   const { t } = useI18n();
   const router = useRouter();
+  const { isEditMode, completeSection, leaveSection, editContinueLabel } = useSectionExit();
 
   // ── Loaded data ──
-  const [currency, setCurrency] = useState('Kč');
+  const [currencyCode, setCurrencyCode] = useState('CZK');
+  const currency = getCurrencySymbol(currencyCode);
 
   const [validationError, setValidationError] = useState('');
   const [subscriptions, setSubscriptions] = useState([]);
@@ -40,7 +45,7 @@ export default function SubscriptionsScreen() {
   useEffect(() => {
     (async () => {
       const loc = await getData('pocketos_location');
-      if (loc?.currency) setCurrency(loc.currency);
+      if (loc?.currency) setCurrencyCode(loc.currency);
     })();
   }, []);
 
@@ -106,18 +111,15 @@ export default function SubscriptionsScreen() {
       }
     }
 
-    await setData('pocketos_subscriptions', subscriptions);
-    await setData('pocketos_onboarding', {
-      completed: false,
-      currentStep: 'subscriptions',
-      percentComplete: 85,
+    await completeSection({
+      persist: async () => { await setData('pocketos_subscriptions', subscriptions); },
+      onboardingPatch: { completed: false, currentStep: 'subscriptions', percentComplete: 85 },
+      nextRoute: '/(onboarding)/splash-other-costs',
     });
-
-    router.replace('/(onboarding)/splash-other-costs');
   };
 
   const progress = 85;
-  const progressLabel = t('onboarding.progress', { percent: progress });
+  const screenProgress = isEditMode ? undefined : progress;
 
   // Count streaming services
   const streamingServices = ['netflix', 'primeVideo', 'disneyPlus', 'appleTvPlus', 'hboMax', 'spotify', 'appleMusic', 'youtubePremium', 'deezer'];
@@ -131,12 +133,11 @@ export default function SubscriptionsScreen() {
       chapter={t('onboarding.subscriptions.chapter')}
       title={t('onboarding.subscriptions.q11.title')}
       helper={t('onboarding.subscriptions.q11.helper')}
-      illustration={<PlaceholderIllustration />}
       onContinue={handleContinue}
-      onBack={() => router.replace('/(onboarding)/splash-subscriptions')}
+      onBack={() => leaveSection(() => router.replace('/(onboarding)/splash-subscriptions'))}
       validationError={validationError}
-      progress={progress}
-      progressLabel={progressLabel}
+      progress={screenProgress}
+      continueLabel={editContinueLabel}
     >
       {/* Quick-add chips — toggle style with icons */}
       <Text style={{ ...T.fieldLabel, color: C.muted, marginBottom: 10 }}>
@@ -197,49 +198,28 @@ export default function SubscriptionsScreen() {
       {/* Subscription cards */}
       {subscriptions.map((sub, idx) => (
         <AnimatedSlideIn key={idx} visible={visibleSubs[idx] !== false}>
-          <View style={{ padding: S.cardPad, backgroundColor: C.surface, borderRadius: R.card, borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
-            {/* Header row with service name + X delete button */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: C.primary }}>
-                {t(`onboarding.subscriptions.q11.services.${sub.name}`)}
-              </Text>
-              <Pressable
-                onPress={() => removeSub(idx)}
-                style={({ pressed, hovered }) => ({
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: hovered
-                    ? C.dangerBg
-                    : pressed
-                      ? 'rgba(209,64,64,0.15)'
-                      : 'transparent',
-                })}
-              >
-                <Text style={{ fontSize: 18, color: C.danger, fontWeight: '600', lineHeight: 20 }}>{'✕'}</Text>
-              </Pressable>
-            </View>
-
-            {/* Amount label + input */}
-            <LabeledInput
-              label={t('onboarding.subscriptions.q11.amountLabel')}
-              value={sub.cost}
-              onChangeText={(v) => updateSub(idx, { cost: v })}
-              numeric
-              placeholder={t('onboarding.subscriptions.q11.amountPlaceholder')}
-              large
-              currency={currency}
-            />
-
-            {/* Frequency label + toggle */}
-            <FrequencyPills
-              options={FREQUENCIES}
-              value={sub.frequency}
-              onChange={(freq) => updateSub(idx, { frequency: freq })}
-              small
-            />
+          <CostCard
+            title={t(`onboarding.subscriptions.q11.services.${sub.name}`)}
+            onRemove={() => removeSub(idx)}
+          >
+            <InputGroup nested>
+              <LabeledInput
+                label={t('onboarding.subscriptions.q11.amountLabel')}
+                value={sub.cost}
+                onChangeText={(v) => updateSub(idx, { cost: v })}
+                numeric
+                placeholder={t('onboarding.subscriptions.q11.amountPlaceholder')}
+                large
+                inGroup
+                currency={currency}
+              />
+              <FrequencyPills
+                options={FREQUENCIES}
+                value={sub.frequency}
+                onChange={(freq) => updateSub(idx, { frequency: freq })}
+                small
+              />
+            </InputGroup>
 
             {/* Auto-renews toggle */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
@@ -265,7 +245,7 @@ export default function SubscriptionsScreen() {
               value={sub.renewalDate}
               onChange={(v) => updateSub(idx, { renewalDate: v })}
             />
-          </View>
+          </CostCard>
         </AnimatedSlideIn>
       ))}
 

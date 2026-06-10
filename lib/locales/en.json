@@ -1,8 +1,19 @@
 {
   "app": {
-    "name": "PocketOS",
-    "tagline": "Your pocket. Upgraded.",
-    "description": "A smart household budgeting tool that helps you track income, manage costs, and take control of your finances — all in one place."
+    "name": "Bida",
+    "tagline": "Your wallet patron",
+    "fullTitle": "Bida – Your wallet patron",
+    "description": "Household budgeting in one place. Income, costs, and what's left to spend.",
+    "sidebar": {
+      "navigation": "Navigation",
+      "tools": "Tools",
+      "planLabel": "Household budget",
+      "languageMenu": "Select language",
+      "languageRow": "{{language}}",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar",
+      "retakeQuestionnaire": "Retake questionnaire"
+    }
   },
   "common": {
     "continue": "Continue",
@@ -15,6 +26,8 @@
     "delete": "Delete",
     "add": "Add",
     "loading": "Loading...",
+    "saving": "Saving...",
+    "retry": "Try again",
     "error": "Something went wrong",
     "yes": "Yes",
     "no": "No",
@@ -22,6 +35,7 @@
     "language": "Language",
     "daily": "Daily",
     "weekly": "Weekly",
+    "fortnightly": "Fortnightly",
     "monthly": "Monthly",
     "quarterly": "Quarterly",
     "annual": "Annual",
@@ -30,7 +44,10 @@
     "datePicker": {
       "day": "Day",
       "month": "Month",
-      "year": "Year"
+      "year": "Year",
+      "placeholderFull": "DD/MM/YYYY",
+      "placeholderMonthYear": "MM/YYYY",
+      "hint": "Type a date or pick a suggestion"
     },
     "months": {
       "january": "January",
@@ -49,9 +66,9 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "PocketOS",
-      "subtitle": "Your household finances, finally clear.",
-      "cta": "Get started"
+      "title": "Bida",
+      "subtitle": "Your wallet patron",
+      "cta": "Start now"
     },
     "consent": {
       "title": "Your Data, Your Privacy",
@@ -71,6 +88,7 @@
       "partnerName": {
         "title": "What should we call your partner?",
         "helper": "Used only to personalise labels like 'Sarah's income'. Nothing else.",
+        "label": "Partner's name",
         "placeholder": "Partner's name",
         "validation": "Please enter your partner's name"
       },
@@ -111,6 +129,8 @@
       "cityLabel": "City / Region (optional)",
       "cityPlaceholder": "e.g. Prague",
       "currencyLabel": "Currency",
+      "currencyPlaceholder": "Select currency",
+      "noCountriesFound": "No countries found",
       "validation": "Please select your country"
     },
     "occupation": {
@@ -121,6 +141,7 @@
       "student": "Student",
       "notWorking": "Not currently working",
       "other": "Other",
+      "otherLabel": "Please specify",
       "otherPlaceholder": "Tell us briefly (optional)",
       "validation": "Please select your occupation",
       "partnerTitle": "What about {{name}}'s work situation?",
@@ -155,11 +176,15 @@
       "q5a": {
         "title": "What's {{name}}'s monthly take-home?",
         "helper": "Net amount, after tax.",
+        "amountLabel": "Monthly take-home",
         "validation": "Please enter {{name}}'s income"
       },
       "q5b": {
         "title": "Any other sources of income?",
         "helper": "Rental income, dividends, financial support — anything regular.",
+        "helperRequired": "Neither you nor your partner has employment income recorded. Add at least one regular income source so we can build your budget.",
+        "helperRequiredSolo": "You don't have employment income recorded. Add at least one regular income source so we can build your budget.",
+        "requiredNote": "At least one income source is required to continue.",
         "yes": "Yes",
         "no": "No",
         "amountLabel": "Amount",
@@ -167,27 +192,48 @@
         "frequencyLabel": "Frequency",
         "descriptionLabel": "Description",
         "labelPlaceholder": "Label (optional)",
-        "addAnother": "Add another source"
+        "addAnother": "Add another source",
+        "validationNoIncome": "We can't build your budget without income. Select Yes and enter at least one regular source — such as benefits, rental income, or financial support — or go back and enter {{name}}'s salary or your own income.",
+        "validationNoIncomeSolo": "We can't build your budget without income. Select Yes and enter at least one regular source — such as benefits, rental income, or financial support.",
+        "validationOtherAmount": "Please enter the amount for at least one income source."
       },
       "q5c": {
         "title": "Do you have savings?",
-        "helper": "Your balance shows how many months of expenses you have covered. Your monthly target is treated as a committed budget item.",
+        "helper": "Your balance shows how many months of expenses you have covered.",
         "balanceLabel": "Current savings balance",
-        "balancePlaceholder": "0",
-        "monthlyTargetLabel": "Monthly savings target",
-        "monthlyTargetPlaceholder": "0"
+        "balancePlaceholder": "0"
       },
       "q5d": {
-        "title": "Do you have a financial goal?",
-        "helper": "A target amount and date — holiday, car, wedding, emergency fund. The AI will factor this into its advice.",
-        "yes": "Yes",
-        "no": "No",
-        "descriptionLabel": "Goal description (optional)",
-        "descriptionPlaceholder": "e.g. Holiday to Thailand",
+        "title": "What is your financial goal?",
+        "helper": "Choose what you want Bida to help you focus on.",
+        "typeReduceCosts": "Reduce costs",
+        "typeReduceCostsDesc": "Cut spending and find savings in your budget",
+        "typeSaveMoney": "Save money",
+        "typeSaveMoneyDesc": "Build savings toward a target or each month",
+        "typeReduceAndSave": "Reduce costs & save money",
+        "typeReduceAndSaveDesc": "Spend less and put the difference aside",
+        "saveModeTitle": "How do you want to save?",
+        "saveModeHelper": "Choose whether you are saving toward a specific target or an ongoing monthly amount.",
+        "saveModeTarget": "Save toward a specific amount",
+        "saveModeTargetDesc": "e.g. 250,000 Kč for a car by a target date",
+        "saveModeOngoing": "Ongoing monthly saving",
+        "saveModeOngoingDesc": "Set aside a fixed amount each month with no end date",
+        "targetTitle": "Your savings target",
+        "targetHelper": "Enter what you are saving for, how much you need, and when you want to reach it.",
+        "ongoingTitle": "Your monthly saving",
+        "ongoingHelper": "How much do you want to set aside each month?",
+        "descriptionLabel": "Goal description",
+        "descriptionPlaceholder": "e.g. Car purchase",
         "amountLabel": "Target amount",
         "amountPlaceholder": "0",
         "dateLabel": "Target date",
-        "validation": "Please enter a target amount"
+        "monthlyTargetLabel": "Monthly savings target",
+        "monthlyTargetPlaceholder": "0",
+        "validationType": "Please select your financial goal",
+        "validationSaveMode": "Please choose how you want to save",
+        "validationTargetAmount": "Please enter your target amount",
+        "validationTargetDate": "Please select a target date",
+        "validationOngoingAmount": "Please enter your monthly savings target"
       }
     },
     "s4": {
@@ -208,18 +254,36 @@
       "q6a": {
         "title": "How much is your monthly rent?",
         "helper": "If utilities are included in your rent and you know the amount, enter base rent only — you'll enter utilities separately next. If you don't know the split (dorm, all-inclusive, etc.), just enter the total and skip utilities.",
+        "amountLabel": "Monthly rent",
         "validation": "Please enter your monthly rent"
       },
       "q6b": {
         "title": "How much do you pay for utilities?",
         "helper": "Gas, electricity, water — combined. An estimate is fine. Skip if you don't know or prefer not to separate.",
-        "skip": "Skip — I don't know or it's included"
+        "skip": "Skip — I don't know or it's included",
+        "modeTotal": "One combined total",
+        "modeItemized": "Break down by utility",
+        "modeLabel": "How would you like to enter utilities?",
+        "amountLabel": "Monthly utilities total",
+        "utilityWater": "Water",
+        "utilityHotWater": "Hot water",
+        "utilityHeating": "Heating",
+        "utilityElectricity": "Electricity",
+        "utilityGas": "Gas",
+        "utilitySewer": "Sewer",
+        "utilityGarbage": "Garbage collection",
+        "addOtherUtility": "Add other utility",
+        "otherUtilityLabel": "Other utility",
+        "otherUtilityPlaceholder": "e.g. Common areas",
+        "otherUtilityAmount": "Amount",
+        "utilitiesSum": "Combined total: {{amount}}"
       },
       "q6c": {
         "title": "Do you pay for internet separately?",
         "helper": "Skip if internet is included in your rent or utilities.",
         "no": "No / Included",
         "yes": "Yes",
+        "amountLabel": "Internet cost",
         "amountPlaceholder": "0",
         "frequencyMonthly": "Monthly",
         "frequencyAnnual": "Annual",
@@ -245,6 +309,7 @@
         "helper": "Maintenance fund, building insurance, service charge, property tax — anything recurring.",
         "yes": "Yes",
         "no": "No",
+        "amountLabel": "Amount",
         "amountPlaceholder": "0",
         "descriptionPlaceholder": "Description (optional)",
         "dueDateLabel": "Due date",
@@ -256,6 +321,7 @@
         "helper": "Contributing to rent, groceries, bills — add any regular support.",
         "yes": "Yes",
         "no": "No",
+        "amountLabel": "Amount",
         "amountPlaceholder": "0",
         "descriptionPlaceholder": "Description (optional)",
         "dueDateLabel": "Due date",
@@ -266,14 +332,27 @@
         "title": "Government and city charges",
         "helper": "Most households pay fixed statutory charges. We've pre-filled the most common ones — confirm or adjust.",
         "wasteTax": "Waste tax",
-        "wasteTaxNote": "1 080 Kč/yr — municipal waste collection",
+        "wasteTaxNote": "{{amount}}/yr — municipal waste collection",
+        "wasteTaxNoteEstimated": "{{amount}}/yr — estimated for {{summary}}. Municipal rules vary; edit if your charge differs.",
+        "wasteTaxSummaryOneAdult": "1 adult",
+        "wasteTaxSummaryAdults": "{{count}} adults",
+        "wasteTaxSummaryChildFull": "1 child at full rate",
+        "wasteTaxSummaryChildrenFull": "{{count}} children at full rate",
+        "wasteTaxSummaryChildReduced": "1 child at reduced rate",
+        "wasteTaxSummaryChildrenReduced": "{{count}} children at reduced rate",
+        "wasteTaxSummaryChildExempt": "1 child exempt",
+        "wasteTaxSummaryChildrenExempt": "{{count}} children exempt",
         "tvLicence": "TV licence",
         "tvLicenceNote": "1 620 Kč/yr — Czech Television",
         "radioLicence": "Radio licence",
         "radioLicenceNote": "540 Kč/yr — Czech Radio",
         "addCustom": "Add custom item",
         "customPlaceholder": "Item name",
+        "customAmountLabel": "Amount",
         "customAmountPlaceholder": "0",
+        "dontPayWasteTax": "I don't pay waste tax",
+        "dontPayTvLicence": "I don't pay TV licence fees",
+        "dontPayRadioLicence": "I don't pay Radio licence fees",
         "frequencyMonthly": "Monthly",
         "frequencyAnnual": "Annual"
       }
@@ -350,7 +429,8 @@
         "motPlaceholder": "MM/YYYY",
         "maintenanceLabel": "Planned maintenance items",
         "maintenanceDescPlaceholder": "What needs doing?",
-        "maintenanceCostPlaceholder": "Cost",
+        "maintenanceCostLabel": "Estimated cost",
+        "maintenanceCostPlaceholder": "0",
         "maintenanceDateLabel": "Date",
         "maintenanceDatePlaceholder": "Date (optional)",
         "addItem": "Add item",
@@ -361,7 +441,8 @@
         "helper": "Add any planned bicycle maintenance or repairs you're saving for — like a new chain, brake pads, or a flat tyre fix.",
         "maintenanceLabel": "Planned maintenance items",
         "maintenanceDescPlaceholder": "What needs doing?",
-        "maintenanceCostPlaceholder": "Cost",
+        "maintenanceCostLabel": "Estimated cost",
+        "maintenanceCostPlaceholder": "0",
         "maintenanceDateLabel": "Date",
         "maintenanceDatePlaceholder": "Date (optional)",
         "addItem": "Add item",
@@ -399,7 +480,7 @@
       "confirmed": "Confirmed",
       "coverageType": "Coverage type",
       "payPrivately": "Pay privately",
-      "premiumLabel": "Monthly premium",
+      "premiumLabel": "Premium",
       "premiumPlaceholder": "0",
       "premiumRequired": "Please enter the premium amount",
       "frequencyLabel": "Frequency",
@@ -412,6 +493,31 @@
       "notesPlaceholder": "e.g. Additional private insurance",
       "customFrequencyLabel": "How many months?",
       "customFrequencyPlaceholder": "e.g. 3",
+      "fixedEndDateLabel": "Contract end date",
+      "renewalPlanLabel": "When this contract ends, what do you plan to do?",
+      "renewalRenew": "Renew the same insurance",
+      "renewalRenewHelper": "Same coverage, same contract period, and the same total premium — we'll help you save for that payment.",
+      "premiumPaidInFullLabel": "Was this contract period paid in full upfront?",
+      "premiumPaidInFullHelper": "If you paid the full premium before the start date, we won't deduct it monthly now — we'll help you save for renewal instead.",
+      "renewReserveSummary": "Save {{amount}} per month for {{months}} months to cover {{total}} at renewal.",
+      "renewReserveExplain": "Your current period is already paid. This monthly reserve builds up toward the next payment.",
+      "renewReserveTightWarning": "Renewal is only {{months}} months away and you may not have enough saved yet (about {{shortfall}} still needed). You can use a lower monthly amount if the suggested one feels too high.",
+      "budgetForRenewLabel": "Include this monthly reserve in your budget?",
+      "budgetForRenewHelper": "We'll deduct this from your daily spending allowance until the contract ends.",
+      "renewUseSuggested": "Use suggested amount ({{amount}}/month)",
+      "renewUseCustom": "Set a lower monthly amount",
+      "renewUseCustomHelper": "Choose this if the suggested amount is too high for your budget right now.",
+      "renewCustomMonthlyLabel": "Your monthly reserve",
+      "renewCustomMonthlyPlaceholder": "e.g. 1 500",
+      "renewalSwitch": "Switch to a different plan",
+      "renewalSwitchHelper": "Different coverage, payment frequency, or price when this contract ends — enter your best estimate.",
+      "renewalEnd": "Let coverage end",
+      "renewalEndHelper": "You don't plan to continue this insurance after it expires.",
+      "switchPlanIntro": "Estimate what you'll pay for the new policy. Prices can go up or down before you sign — you can update this later.",
+      "switchPremiumLabel": "Expected premium at renewal",
+      "switchPremiumPlaceholder": "e.g. 12 000",
+      "switchPremiumHelper": "Total amount you expect to pay when the new policy starts (for the period shown below).",
+      "switchPremiumFrequencyHelper": "How you expect to pay after the new policy starts. We spread the amount above over the months until your current contract ends.",
       "validation": "Please confirm this member's insurance details",
       "q8": {
         "title": "Health insurance for {{name}}",
@@ -481,6 +587,7 @@
           "other": "Other"
         },
         "suggestions": "Suggestions — tap to add",
+        "amountLabel": "Amount",
         "amountPlaceholder": "0",
         "frequencyMonthly": "Monthly",
         "frequencyAnnual": "Annual",
@@ -502,6 +609,7 @@
       },
       "q10a": {
         "heading": "Your pets",
+        "petLabel": "Pet {{n}}",
         "title": "Pet {{n}}",
         "helper": "Enter the regular costs.",
         "costsLabel": "Costs",
@@ -512,6 +620,7 @@
         "other": "Other",
         "nameLabel": "Name (optional)",
         "namePlaceholder": "Pet's name",
+        "amountLabel": "Amount",
         "foodLabel": "Food cost",
         "foodPlaceholder": "0",
         "vetLabel": "Vet cost",
@@ -679,7 +788,7 @@
     },
     "s12": {
       "eyebrow": "Section 12 — Budget",
-      "heading": "Budget & Strategy",
+      "heading": "Set your flexible spending budget",
       "body": "Now let's set your flexible spending budget and decide how unspent money rolls over."
     },
     "budget": {
@@ -695,6 +804,7 @@
         "available": "Available for flexible spending",
         "budgetLabel": "Your monthly flexible budget",
         "amount": "Amount",
+        "amountsNote": "All amounts in {{currency}}",
         "currency": "Currency",
         "incomeUser": "Your income",
         "incomePartner": "Partner's income",
@@ -709,34 +819,94 @@
           "other": "Other"
         },
         "placeholder": "e.g. 15 000",
-        "validation": "Please enter your flexible budget amount"
+        "validation": "Please enter your flexible budget amount",
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all",
+        "exportLabel": "Export budget",
+        "exportCsv": "CSV",
+        "exportXlsx": "XLSX",
+        "exportPdf": "PDF",
+        "displayFrequencyLabel": "How you want to see your budget",
+        "displayHelper": "Summary stays monthly; preview uses your chosen period.",
+        "splitSlider": {
+          "label": "Adjust spending vs savings",
+          "helper": "Slide left to lower your budget and send more to savings each month. Slide right to spend more.",
+          "moreSavings": "More to savings",
+          "moreSpending": "More to spend",
+          "summary": "{{spend}} to spend · {{savings}} to savings",
+          "a11y": "Spending versus savings split"
+        },
+        "previewLabel": {
+          "daily": "Per day",
+          "weekly": "Per week",
+          "monthly": "Per month"
+        },
+        "loading": "Calculating your budget...",
+        "loadError": "We could not load your household data. Check your connection and try again.",
+        "a11y": {
+          "expandAll": "Expand all budget rows",
+          "collapseAll": "Collapse all budget rows",
+          "expandRow": "Expand {{label}}",
+          "collapseRow": "Collapse {{label}}",
+          "previewAmount": "Budget preview, {{frequency}}"
+        },
+        "deductSavingsGoal": {
+          "label": "Reserve savings goal from spending budget?",
+          "helper": "When enabled, your spending preview subtracts the monthly amount needed to reach your savings goal.",
+          "yes": "Deduct from budget",
+          "no": "Keep separate",
+          "previewNote": "{{deduction}} reserved for your goal · {{amount}} to spend"
+        }
       },
       "q14a": {
         "title": "What happens to unspent budget?",
         "helper": "Choose how unspent money from your flexible budget carries over to the next month.",
         "free": "Free rollover",
-        "freeDesc": "All unspent budget carries over to next month with no limit.",
+        "freeDesc": "Any money you don't spend is added to next month's flexible budget — your daily allowance goes up until you use it.",
         "capped": "Capped rollover",
-        "cappedDesc": "Unspent budget carries over up to a multiplier of your monthly budget.",
+        "cappedDesc": "Unspent budget carries over, but only up to a limit you set — so savings don't pile up without bound.",
         "reset": "Reset each month",
-        "resetDesc": "Any unspent budget is forfeited at the end of each month.",
+        "resetDesc": "Each month starts fresh. Unspent budget does not roll into next month's spending allowance.",
+        "capTypeLabel": "How should we cap rollover?",
+        "capTypeMultiplier": "Multiple of monthly budget",
+        "capTypeMultiplierHelper": "e.g. ×2 means rollover can reach twice your monthly flexible budget.",
+        "capTypeAmount": "Fixed amount cap",
+        "capTypeAmountHelper": "Set a maximum rollover balance in currency — e.g. 5 000 Kč.",
+        "customCapLabel": "Maximum rollover balance",
+        "customCapPlaceholder": "e.g. 5 000",
         "multiplierLabel": "Rollover cap",
         "multiplier2": "×2 (two months)",
         "multiplier3": "×3 (three months)",
         "multiplier4": "×4 (four months)",
-        "validation": "Please select a rollover strategy"
-      }
+        "resetDestinationLabel": "Where should unspent money go?",
+        "resetDestinationHelper": "At month end, leftover flexible budget is routed to a tracked balance — so your numbers still add up.",
+        "resetLooseMoney": "Track as loose cash",
+        "resetLooseMoneyHelper": "Leftover is recorded as loose cash — not added to next month's spending allowance or formal savings.",
+        "resetForfeit": "Track as loose cash",
+        "resetForfeitHelper": "Leftover is recorded as loose cash — not added to next month's spending allowance or formal savings.",
+        "resetToSavings": "Add to savings",
+        "resetToSavingsHelper": "Leftover budget is moved into your savings balance at the end of each month.",
+        "resetToOtherGoal": "Set aside for another goal",
+        "resetToOtherGoalHelper": "Track it separately — e.g. holiday fund, car repair, or a one-off purchase.",
+        "otherGoalLabel": "What is this goal?",
+        "otherGoalPlaceholder": "e.g. Summer holiday fund",
+        "validation": "Please select a rollover strategy",
+        "validationCapMultiplier": "Please choose a rollover multiplier",
+        "validationCapAmount": "Please enter a custom rollover cap amount",
+        "validationOtherGoal": "Please name the goal you are setting money aside for"
+      },
+      "familyContribution": "Family contribution {{n}}"
     },
     "s13": {
       "eyebrow": "Almost done",
-      "heading": "Review & Confirm",
+      "heading": "Check everything looks right",
       "body": "Let's review everything before we start. You can always come back and edit later."
     },
     "review": {
       "chapter": "Review & Confirm",
       "q15": {
         "title": "Review your information",
-        "helper": "Check everything looks right. Tap any section to expand and review the details.",
+        "helper": "Expand a section if you need to check details.",
         "sections": {
           "household": "Household",
           "location": "Location & Occupation",
@@ -782,7 +952,9 @@
           "apr": "APR",
           "monthlyBudget": "Monthly flexible budget",
           "rollover": "Rollover strategy",
-          "multiplier": "Rollover multiplier"
+          "multiplier": "Rollover multiplier",
+          "rolloverCap": "Rollover cap",
+          "resetDestination": "Unspent budget goes to"
         },
         "cta": "Looks good — take me to my dashboard",
         "skip": "I'll finish this later"
@@ -791,21 +963,769 @@
     "progress": "{{percent}}% complete"
   },
   "dashboard": {
+    "common": {
+      "export": "Export",
+      "exportTable": "Export table"
+    },
     "title": "Dashboard",
     "income": "Income",
     "costs": "Costs",
+    "expenses": "Expenses",
     "budget": "Budget",
+    "tracker": "Tracker",
     "goals": "Goals",
+    "savings": "Savings",
     "alerts": "Alerts",
     "summary": "Summary",
+    "tabRoles": {
+      "dashboard": "Your spending budget today and what needs attention.",
+      "income": "Household income and savings goals — edit amounts inline.",
+      "expenses": "Fixed costs and debt payments already committed each month.",
+      "budget": "How much is left for everyday spending after commitments.",
+      "summary": "Full ledger with health metrics and section-by-section analysis."
+    },
+    "ledgerStrip": {
+      "income": "Income",
+      "committed": "Committed",
+      "available": "Available",
+      "toSpend": "To spend",
+      "toSpendNote": "{{spend}} of {{available}} available set aside for everyday spending",
+      "a11y": "Monthly plan: income, committed costs, available after commitments, spending budget",
+      "openIncome": "Open income tab",
+      "openExpenses": "Open expenses tab",
+      "openBudget": "Open budget tab"
+    },
+    "ledgerCascade": {
+      "income": "Income",
+      "committed": "Committed",
+      "committedHint": "Includes bills, subscriptions and debt payments",
+      "available": "Available",
+      "saved": "Saved",
+      "savedDeducted": "Reserved from your spending budget",
+      "savedIncluded": "Not separated from spending — enable deduct on Budget to protect this amount",
+      "costsReduced": "Costs reduced",
+      "costsReducedSince": "Since you started tracking",
+      "costsReducedNone": "No reduction yet — edit expenses to lower committed costs",
+      "toSpend": "To spend",
+      "toSpendIncludedGoal": "Your savings goal pace is included in this amount",
+      "unallocated": "Unallocated",
+      "a11y": "Monthly plan: income, committed costs, available, savings, spending budget, unallocated cash",
+      "openIncome": "Open income tab",
+      "openExpenses": "Open expenses tab",
+      "openBudget": "Open budget tab",
+      "openGoals": "Open goals tab"
+    },
+    "saveFeedback": {
+      "updated": "Spending budget is now {{amount}} per month ({{delta}})",
+      "unchanged": "Saved. Spending budget unchanged at {{amount}} per month."
+    },
+    "tabComingSoon": "This section is coming in a future update.",
+    "errorBoundary": {
+      "title": "Something went wrong",
+      "body": "We couldn't display the dashboard. Try again or refresh the app."
+    },
+    "metricExplain": {
+      "tapHint": "Tap to see how this is calculated",
+      "gotIt": "Got it",
+      "closeA11y": "Close explanation",
+      "whatItMeans": "What this means",
+      "calculation": "How we calculated this",
+      "rows": {
+        "income": "Monthly income",
+        "fixedCosts": "Fixed costs",
+        "debtPayments": "Debt payments",
+        "available": "Left after fixed costs",
+        "flexibleBudget": "Your flexible budget",
+        "spendingBudget": "Spending budget shown",
+        "savingsReservation": "Savings goal reserved",
+        "daysInMonth": "Days in this month",
+        "dailyAllowance": "Daily allowance",
+        "totalCommitted": "Total committed",
+        "fixedLoadPct": "Fixed load",
+        "buffer": "Monthly buffer",
+        "recurringTotal": "Recurring commitments",
+        "recurringPct": "Share of income"
+      },
+      "flexibleBudget": {
+        "title": "Your spending budget",
+        "meaning": "Money left for everyday spending after rent, bills, and debt payments. Toggle daily, weekly, or monthly to see it in the period that suits you.",
+        "meaningDeducted": "Your spending budget after reserving the monthly amount needed for your savings goal. Toggle daily, weekly, or monthly to see it in the period that suits you.",
+        "formula": "{{monthly}} ÷ {{days}} days = {{daily}} per day"
+      },
+      "fixedLoad": {
+        "title": "Fixed load",
+        "meaning": "This shows how much of your income is already spoken for by fixed costs and minimum debt payments. Above 80% feels tight; above 100% means commitments exceed income.",
+        "formula": "(Fixed costs + debt payments) ÷ income × 100"
+      },
+      "monthlyBuffer": {
+        "title": "Budget flexibility",
+        "meaning": "Cash left over after your spending budget is set aside. Think of it as wiggle room — positive means extra headroom; negative means the spending budget is higher than what you actually have left.",
+        "formula": "Income − fixed costs − debt payments − spending budget"
+      },
+      "recurringCosts": {
+        "title": "Recurring costs",
+        "meaning": "Subscriptions, insurance premiums, and debt minimum payments that repeat every month. These are the costs you can review when you want to free up money.",
+        "formula": "Recurring commitments ÷ income × 100"
+      },
+      "totalIncome": {
+        "title": "Total income",
+        "meaning": "The sum of all household income converted to a monthly amount — salaries, benefits, and any other regular sources you entered during setup.",
+        "formula": "Each income source converted to monthly, then added together",
+        "rows": {
+          "total": "Total monthly income"
+        }
+      },
+      "totalExpenses": {
+        "title": "Committed costs",
+        "meaning": "Fixed household costs plus minimum debt payments due each month. This is money already committed before everyday spending.",
+        "formula": "Fixed costs + debt payments",
+        "rows": {
+          "total": "Total committed per month"
+        }
+      },
+      "savingsGoalPlan": {
+        "title": "Saving goal",
+        "targetMeaning": "The amount you want to save and the deadline you set during setup. We use this to work out how much to set aside each month.",
+        "ongoingMeaning": "A fixed amount you plan to set aside every month with no end date — useful for building savings steadily over time.",
+        "noGoalMeaning": "You have not set a savings goal yet. Add one in Income to see your target here.",
+        "reduceCostsMeaning": "Your primary goal is to lower household spending rather than save toward a specific amount.",
+        "rows": {
+          "goalAmount": "Goal amount",
+          "deadline": "Target deadline",
+          "monthlyTarget": "Monthly amount",
+          "schedule": "Schedule"
+        }
+      },
+      "savingsGoal": {
+        "title": "Goal tracking",
+        "meaning": "Shows how much you have saved so far and how much to set aside per day, week, or month to reach your target by the deadline.",
+        "ongoingMeaning": "Shows your total saved balance and how much you plan to set aside on an ongoing basis. Toggle daily, weekly, or monthly to see the pace in the period that suits you.",
+        "noGoalMeaning": "Set a savings goal in Income to see how much you need to put aside and track your progress here.",
+        "formula": "(Target − current savings) ÷ months remaining",
+        "rows": {
+          "target": "Savings target",
+          "balance": "Total saved",
+          "monthsLeft": "Months remaining",
+          "monthlyNeeded": "Monthly savings needed",
+          "monthlyTarget": "Monthly amount set aside",
+          "savePace": "Save per {{period}}"
+        }
+      },
+      "infoA11y": "How this is calculated"
+    },
+    "home": {
+      "hero": {
+        "setGoalPrompt": "Set a goal to track your monthly savings plan"
+      },
+      "headlineLabel": "Your flexible budget",
+      "spendingBudget": "Your spending budget",
+      "spendingBudgetNote": "{{amount}} per month after fixed costs",
+      "spendingBudgetNoteDeducted": "{{spend}} to spend · {{goal}} reserved for your goal",
+      "goalTracking": {
+        "title": "Goal tracking",
+        "onTrack": "On track",
+        "behind": "Behind plan",
+        "noGoalChip": "No goal set",
+        "reduceCostsChip": "Cost focus",
+        "reduceCostsLabel": "Working toward lower household spending",
+        "ongoingChip": "Monthly saving",
+        "ongoingLabel": "Ongoing amount set aside each month",
+        "monthlyNeededLabel": "Monthly amount needed to reach your goal",
+        "savePaceLabel": "Save {{amount}} per {{period}} to reach your goal",
+        "ongoingPaceLabel": "Set aside {{amount}} per {{period}}"
+      },
+      "monthlyNote": "{{amount}} per month after fixed costs and debt payments",
+      "topCosts": "Top cost categories",
+      "table": {
+        "category": "Category",
+        "perdaily": "Per day",
+        "perweekly": "Per week",
+        "permonthly": "Per month"
+      },
+      "frequency": {
+        "prevA11y": "Show previous period",
+        "nextA11y": "Show next period",
+        "labelA11y": "Amount period, {{period}}"
+      },
+      "editSetup": "Edit setup",
+      "editSection": "Edit {{section}}",
+      "reviewAll": "Review all sections",
+      "loading": "Loading your budget...",
+      "loadError": "We could not load your household data.",
+      "emptyTitle": "No budget data yet",
+      "emptySubtitle": "Complete setup to see your household budget here.",
+      "startSetup": "Start setup",
+      "health": {
+        "fixedLoad": "Fixed load",
+        "fixedLoadLabel": "Of income committed to fixed costs and debt",
+        "budgetFlexibility": "Budget flexibility",
+        "budgetFlexibilityLabel": "Headroom after your spending budget",
+        "surplus": "Monthly buffer",
+        "recurring": "Recurring costs",
+        "recurringLabel": "Share of income for recurring bills",
+        "status": {
+          "tight": "Tight — review largest costs",
+          "overcommitted": "Overcommitted — costs exceed income",
+          "deficit": "Flexible budget exceeds what's left"
+        }
+      },
+      "actions": {
+        "title": "Needs attention",
+        "viewAll": "View all"
+      },
+      "trackerSnapshot": {
+        "title": "Spending pace",
+        "openTracker": "Open tracker",
+        "noLogs": "No spending logged yet — your full allowance is available.",
+        "a11y": "Spending pace today and this week, open tracker"
+      },
+      "monthEndStatus": {
+        "title": "Month-end routing",
+        "rolloverBalance": "Rollover balance",
+        "lastClosed": "Closed {{period}}",
+        "projected": "Projected leftover this month",
+        "projectedAmount": "{{amount}} available",
+        "a11y": "Month-end routing status, open budget settings"
+      },
+      "recurring": {
+        "title": "Recurring commitments",
+        "annual": "Per year",
+        "review": "Review all recurring costs",
+        "manyStreaming": "{{count}} streaming services — consider consolidating",
+        "subBudgetHeavy": "Subscriptions use {{pct}}% of your flexible budget"
+      },
+      "kpi": {
+        "dailyBudget": "Daily budget",
+        "totalIncome": "Total income",
+        "totalExpenses": "Total expenses",
+        "committedCosts": "Committed costs",
+        "committedCostsHint": "Fixed costs + debt payments per month",
+        "savingGoal": "Saving goal",
+        "perDay": "Per day",
+        "perWeek": "Per week",
+        "perMonth": "Per month",
+        "noGoal": "Not set",
+        "reduceCosts": "Reduce costs",
+        "reduceCostsSubtitle": "Primary financial goal",
+        "savingsMonthly": "Monthly savings target",
+        "goalMonthly": "Monthly",
+        "goalByDeadline": "By {{date}}",
+        "savingsBalance": "Current savings",
+        "totalSavings": "Total savings",
+        "savingsInflow": "+{{amount}}/month planned",
+        "looseMoneyHint": "{{amount}} loose cash",
+        "a11y": {
+          "dailyBudget": "Daily budget, {{amount}}, open budget"
+        }
+      },
+      "chart": {
+        "expensesTitle": "Expenses",
+        "expensesSubtitle": "Fixed costs by category — tap a row to see line items",
+        "empty": "No expense categories yet"
+      },
+      "sections": {
+        "income": "Income and savings",
+        "housing": "Housing",
+        "transport": "Transport",
+        "budget": "Budget and rollover"
+      }
+    },
+    "insights": {
+      "cardTitle": "Household insight",
+      "viewAnalysis": "View full analysis",
+      "actions": {
+        "reviewBudget": "Review budget",
+        "reviewExpenses": "Review expenses",
+        "reviewDebts": "Review debts",
+        "reviewSubscriptions": "Review subscriptions"
+      },
+      "sectionTitle": "AI insight",
+      "slotLabel": "Insight",
+      "headline": {
+        "balanced": "Your fixed costs and flexible budget look balanced.",
+        "tight": "Fixed costs use {{pct}}% of income — review your largest categories.",
+        "overcommitted": "Fixed costs and debt payments exceed {{pct}}% of income.",
+        "topCategory": "{{category}} is your largest cost at {{pct}}% of income."
+      },
+      "sections": {
+        "income": {
+          "empty": "No income sources recorded yet.",
+          "summary": "{{count}} income source(s) recorded."
+        },
+        "housing": {
+          "empty": "No housing costs recorded.",
+          "highShare": "Housing takes {{pct}}% of income — worth reviewing if you can reduce it."
+        },
+        "transport": {
+          "empty": "No transport costs recorded."
+        },
+        "health": {
+          "empty": "No health insurance premiums recorded."
+        },
+        "children": {
+          "empty": "No children's costs recorded."
+        },
+        "pets": {
+          "empty": "No pet costs recorded."
+        },
+        "subscriptions": {
+          "empty": "No subscriptions recorded.",
+          "summary": "{{count}} subscriptions cost {{pct}}% of income each month.",
+          "manyStreaming": "{{count}} streaming services — you may be able to consolidate.",
+          "renewalsSoon": "{{count}} renewals coming up in the next 30 days."
+        },
+        "other": {
+          "empty": "No other regular costs recorded."
+        },
+        "debts": {
+          "empty": "No debts recorded.",
+          "summary": "{{count}} debts with minimum payments each month.",
+          "highApr": "{{count}} high-interest debt(s) — extra payments will help most."
+        },
+        "budget": {
+          "summary": "Flexible spending is {{pct}}% of income after fixed costs.",
+          "negativeSurplus": "Your flexible budget is higher than what's left after fixed costs."
+        },
+        "goals": {
+          "empty": "No financial goal set yet.",
+          "onTrack": "Your goal looks achievable with your current flexible budget.",
+          "atRisk": "You may need to save more each month or adjust your goal date."
+        },
+        "generic": {
+          "summary": "This category is {{pct}}% of your monthly income."
+        }
+      }
+    },
+    "summaryScreen": {
+      "intro": "Full household ledger with insights on each section. Tap Edit to update any area.",
+      "healthSection": "Cost commitments",
+      "edit": "Edit",
+      "tableNote": "Monthly amounts in {{currency}}"
+    },
+    "expensesScreen": {
+      "totalMonthly": "Total monthly expenses",
+      "totalExpenses": "Total expenses",
+      "committedCosts": "Committed costs",
+      "committedBreakdown": "{{fixed}} fixed · {{debt}} debt",
+      "committedAnnual": "{{amount}} per year",
+      "addExpense": "Add {{type}}",
+      "annualTotal": "{{amount}} per year",
+      "chartTitle": "Expenses by category",
+      "tableTitle": "Expenses breakdown",
+      "insightContextTitle": "Category insight",
+      "emptyPanel": "No expenses recorded in this group yet.",
+      "emptyHint": "Tap Add below to record it here — no need to leave this screen.",
+      "tabs": {
+        "fixed": "Fixed expenses",
+        "recurring": "Recurring expenses",
+        "overview": "Overview",
+        "primaryA11y": "Expense type",
+        "secondaryA11y": "Expense category",
+        "helper": {
+          "overview": "All committed costs by category — rent, bills, debt payments, and more.",
+          "fixed": "Costs that stay roughly the same each month — rent, utilities, insurance, taxes.",
+          "recurring": "Regular but variable bills — subscriptions, transport, pets, and minimum debt payments."
+        }
+      },
+      "subtabs": {
+        "rent": "Rent",
+        "utilities": "Utilities",
+        "health_insurance": "Health insurance",
+        "waste_tax": "Waste tax",
+        "tv_licence": "TV licence",
+        "radio_licence": "Radio licence",
+        "subscriptions": "Subscriptions",
+        "internet": "Internet",
+        "pets": "Pets",
+        "mortgage": "Mortgage",
+        "transport": "Transport",
+        "children": "Children",
+        "debts": "Debts",
+        "housing_other": "Other housing expenses",
+        "family_contribution": "Family contribution",
+        "other": "Other expenses",
+        "custom_taxes": "Other government charges"
+      },
+      "subtabEmpty": "You don't have any {{type}} expenses yet.",
+      "edit": {
+        "amount": "Amount",
+        "renewalDate": "Renewal date",
+        "dueDate": "Due date",
+        "endDate": "Coverage end date",
+        "monthlyOnly": "Billed monthly",
+        "annualOnly": "Billed annually"
+      },
+      "recurringTableTitle": "Recurring expenses",
+      "fixedTableTitle": "Fixed expenses",
+      "editSectionHint": "This expense is part of a household section. Open the section editor to change details.",
+      "openSectionEdit": "Edit section",
+      "breakdown": {
+        "fixed": "Fixed expenses",
+        "recurring": "Recurring expenses"
+      },
+      "dueOn": "Due {{date}}",
+      "noDate": "—",
+      "table": {
+        "name": "Item",
+        "expense": "Expense",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "amount": "Amount",
+        "monthly": "Monthly",
+        "share": "Share",
+        "date": "Date"
+      },
+      "fixedRecurring": {
+        "title": "Fixed and recurring expenses",
+        "fixedCosts": "Fixed expenses",
+        "recurring": "Recurring expenses",
+        "combined": "Impact on your income",
+        "ofIncome": "{{pct}}% of income",
+        "salaryImpact": "{{amount}} of your {{income}} monthly income ({{pct}}%) goes to fixed and recurring expenses"
+      },
+      "empty": "No expenses in this category.",
+      "renewsOn": "Renews on {{date}}",
+      "endsOn": "Coverage ends {{date}}",
+      "renewalSoon": "Renewal coming up soon",
+      "filters": {
+        "all": "All",
+        "subscriptions": "Subscriptions",
+        "insurance": "Insurance",
+        "housing": "Housing",
+        "transport": "Transport",
+        "other": "Other"
+      }
+    },
+    "goalsScreen": {
+      "empty": "You have not set a financial goal yet.",
+      "setGoal": "Set a goal",
+      "goalType": "Your goal",
+      "reduceCosts": "Reduce costs",
+      "reduceCostsHelper": "Bida will focus on finding savings and trimming spending.",
+      "ongoingTarget": "Monthly saving",
+      "ongoingHelper": "A fixed amount you plan to set aside each month.",
+      "target": "Target amount",
+      "byDate": "Target date: {{date}}",
+      "currentSavings": "Current savings",
+      "monthlyNeeded": "Monthly savings needed",
+      "onTrack": "On track — you have {{amount}} flexible each month.",
+      "gap": "You need {{needed}} per month but only have {{available}} flexible."
+    },
+    "savingsScreen": {
+      "totalBalance": "Total savings",
+      "balanceHelper": "Your current savings balance from onboarding.",
+      "monthlyPlan": "Planned monthly savings",
+      "monthlyPlanHelper": "From your budget split, savings goal, and rollover settings.",
+      "noInflows": "No monthly savings planned yet — adjust your budget or set a savings goal.",
+      "variable": "Varies with spending",
+      "resetPolicy": "Unspent budget policy",
+      "resetToSavings": "Leftover flexible budget is added to savings at month end.",
+      "resetToOther": "Leftover budget is set aside for: {{name}}",
+      "resetLooseMoney": "Leftover flexible budget is tracked as loose cash at month end.",
+      "looseMoney": "Loose cash",
+      "looseMoneyHelper": "Unallocated money from months when you underspent your flexible budget.",
+      "otherGoalHelper": "Money set aside at month end for this goal.",
+      "otherGoalFallback": "Another goal",
+      "projectionTitle": "Anticipated savings",
+      "projectionHelper": "Projected balance if you keep your planned monthly savings for the next year.",
+      "projectionGoalHelper": "Projection toward {{target}} by {{date}}, based on your planned monthly savings.",
+      "inflow": {
+        "budgetShift": "Budget split to savings",
+        "goalReserve": "Savings goal reservation",
+        "ongoingGoal": "Monthly savings target",
+        "resetPolicy": "Unspent budget → savings (month end)",
+        "resetLoose": "Unspent budget → loose cash (month end)"
+      },
+      "chart": {
+        "empty": "Add a savings balance or monthly savings plan to see a projection.",
+        "now": "Now",
+        "monthsAhead": "{{months}} months ahead",
+        "goalMonth": "Goal in {{months}} months",
+        "projected": "Projected: {{amount}}"
+      }
+    },
+    "trackerScreen": {
+      "intro": {
+        "title": "Spending pace",
+        "body": "See how you're doing today, this week, and this month — plus where leftover budget will go at month end.",
+        "loggingSoon": "Expense logging is coming soon. Previews will update as you record spending."
+      },
+      "noSpendLogged": "No spending logged yet — allowance shows your full budget for this period.",
+      "daily": {
+        "title": "Today",
+        "helper": "Your daily flexible allowance and spending so far.",
+        "allowance": "Today's allowance",
+        "spent": "Spent today",
+        "remaining": "Left today",
+        "over": "Over today",
+        "status": {
+          "under": "Under today's pace — room to spend.",
+          "on_track": "On track for today.",
+          "over": "Over today's allowance."
+        }
+      },
+      "weekly": {
+        "title": "This week",
+        "helper": "Monday–Sunday totals for your flexible budget.",
+        "allowance": "This week's allowance",
+        "spent": "Spent this week",
+        "remaining": "Left this week",
+        "over": "Over this week",
+        "status": {
+          "under": "Under this week's pace — you're ahead.",
+          "on_track": "On track for the week.",
+          "over": "Over this week's allowance."
+        }
+      },
+      "monthly": {
+        "title": "This month",
+        "helper": "Month-end routing based on spending so far and your rollover settings.",
+        "spentSoFar": "Spent this month",
+        "projectedLeftover": "Projected leftover",
+        "goesTo": "If you keep this pace, leftover goes to",
+        "noLeftover": "No leftover projected — you've used your flexible budget (or more).",
+        "route": {
+          "rolloverFree": "Next month's flexible budget (rollover)",
+          "rolloverCapped": "Rollover balance (within your cap)",
+          "rolloverCappedSplit": "{{rollover}} to rollover · {{loose}} to loose cash (over cap)",
+          "savings": "Savings balance",
+          "looseMoney": "Loose cash balance",
+          "otherGoal": "Set aside for: {{name}}"
+        }
+      }
+    },
+    "monthEndHistory": {
+      "title": "Past month-end routing",
+      "helper": "How leftover flexible budget was routed when each month closed.",
+      "rollover": "Added to rollover",
+      "savings": "Added to savings",
+      "looseMoney": "Added to loose cash",
+      "otherGoal": "Set aside for another goal",
+      "excessLoose": "+{{amount}} over cap → loose cash"
+    },
+    "budgetScreen": {
+      "flexible": "Flexible budget",
+      "detailsTitle": "Budget details",
+      "annualEquivalent": "{{monthly}} per month · {{amount}} per year",
+      "monthlyEquivalent": "{{amount}} per month",
+      "spendingAfterDeduction": "{{amount}} to spend after reserving {{deduction}} for your goal",
+      "savingsShift": "{{amount}} per month redirected to savings from your flexible budget",
+      "available": "Calculated available: {{amount}}",
+      "unallocatedSlider": {
+        "title": "Shift unallocated cash to savings",
+        "helper": "{{amount}} available after commitments. Slide to split between spending and savings.",
+        "moreSavings": "More to savings",
+        "moreSpending": "More to spending",
+        "a11y": "Adjust how unallocated cash is split between spending and savings"
+      },
+      "deductSavingsGoal": {
+        "label": "Reserve savings goal from spending budget",
+        "helper": "Subtract the monthly savings needed for your goal from the spending budget shown on the dashboard.",
+        "yes": "Deduct from budget",
+        "no": "Keep separate"
+      },
+      "frequency": {
+        "daily": "Shown per day",
+        "weekly": "Shown per week",
+        "monthly": "Shown per month"
+      },
+      "rollover": {
+        "title": "Rollover strategy",
+        "free": "Free rollover",
+        "capped": "Capped rollover",
+        "reset": "Reset each month",
+        "multiplier": "Cap at {{value}}× daily budget"
+      }
+    },
+    "alertsScreen": {
+      "empty": "No alerts right now — you're up to date.",
+      "review": "Review",
+      "snooze": "Snooze 7 days",
+      "dismiss": "Dismiss",
+      "fallback": {
+        "subscription": "Subscription",
+        "debt": "Debt"
+      },
+      "types": {
+        "subscriptionRenewal": "{{name}} renews in {{days}} days",
+        "healthExpiry": "{{member}} insurance ends in {{days}} days",
+        "motDue": "MOT due in {{days}} days",
+        "insuranceRenewal": "Vehicle insurance renews in {{days}} days",
+        "highApr": "{{name}} has {{apr}}% APR — high interest",
+        "promoExpiry": "Promo rate ends in {{days}} days",
+        "negativeSurplus": "Spending budget exceeds what's left by {{amount}}",
+        "overcommitted": "Fixed costs and debt use {{pct}}% of income",
+        "manyStreaming": "{{count}} streaming services — consider consolidating"
+      },
+      "actions": {
+        "reviewBudget": "Review budget",
+        "reviewCosts": "Review expenses",
+        "reviewHealth": "Review health insurance",
+        "reviewTransport": "Review transport",
+        "reviewDebts": "Review debts",
+        "reviewSubscriptions": "Review subscriptions"
+      }
+    },
+    "incomeScreen": {
+      "total": "Total monthly income",
+      "annualTotal": "{{amount}} per year",
+      "streamsTitle": "Income streams",
+      "chartTitle": "Income by source",
+      "tableTitle": "Income breakdown",
+      "empty": "No income recorded yet.",
+      "emptyPanel": "No income recorded in this group yet.",
+      "subtabEmpty": "You don't have any {{type}} income yet.",
+      "otherEmpty": "You haven't added any other income sources yet.",
+      "otherEmptyHint": "Freelance work, benefits, rental income — add any regular source here.",
+      "addOtherSource": "Add other income",
+      "namedIncome": "{{name}}'s income",
+      "otherSource": "Other source {{n}}",
+      "sourceLabel": "Source label",
+      "monthlyEquivalent": "{{amount}} per month",
+      "saveStream": "Save changes",
+      "saved": "Saved",
+      "savingsBalance": "Current savings",
+      "savingsTarget": "Monthly savings target",
+      "tabs": {
+        "overview": "Overview",
+        "primary": "Main income",
+        "other": "Other sources",
+        "primaryA11y": "Income type",
+        "secondaryA11y": "Income source"
+      },
+      "table": {
+        "source": "Source",
+        "share": "Share"
+      }
+    },
+    "recurring": {
+      "healthSelf": "Your health insurance",
+      "healthPartner": "Partner's health insurance",
+      "healthChild": "Child's health insurance",
+      "vehicleInsurance": "Vehicle insurance",
+      "vehicleInsuranceN": "Vehicle {{n}} insurance",
+      "debtPayment": "Debt payment"
+    },
     "placeholder": {
-      "title": "Welcome to PocketOS",
+      "title": "Welcome to Bida",
       "subtitle": "Your financial clarity starts here"
+    }
+  },
+  "sectionEdit": {
+    "editButton": "Edit",
+    "closeA11y": "Close editor",
+    "loading": "Loading your data…",
+    "loadError": "We could not load this section. Try again later.",
+    "saveError": "We could not save your changes. Try again.",
+    "income": {
+      "helper": "Update amounts directly — changes save to your household budget immediately.",
+      "yourIncome": "Your income",
+      "partnerIncome": "Partner's income",
+      "savingsBalance": "Current savings balance",
+      "savingsMonthly": "Monthly savings target",
+      "goalType": "What is your financial goal?",
+      "saveMode": "How do you want to save?",
+      "goalDescription": "Goal description",
+      "goalAmount": "Target amount",
+      "goalDate": "Target date",
+      "validation": {
+        "amount": "Please enter your income amount",
+        "goal": "Please enter your goal amount",
+        "saveMode": "Please choose how you want to save",
+        "ongoing": "Please enter your monthly savings target"
+      }
+    },
+    "budget": {
+      "helper": "Set your flexible spending budget and how unspent money rolls over.",
+      "monthlyFlexible": "Monthly flexible budget",
+      "displayFrequency": "How you want to see your budget",
+      "deductSavingsGoal": "Reserve savings goal from spending budget?",
+      "effectiveSpend": "{{amount}} available to spend after goal reservation",
+      "calculated": "Calculated from income and costs: {{amount}}",
+      "rollover": "Rollover strategy",
+      "validation": {
+        "amount": "Please enter your flexible budget"
+      }
+    },
+    "debts": {
+      "helper": "Edit balances and minimum payments for each debt.",
+      "empty": "No debts recorded. Add one below if needed.",
+      "itemLabel": "Debt {{n}}",
+      "add": "Add debt",
+      "validation": "Each debt needs a balance and minimum payment"
+    },
+    "subscriptions": {
+      "helper": "Update subscription costs and billing frequency.",
+      "empty": "No subscriptions recorded.",
+      "unnamed": "Subscription",
+      "validation": "Each subscription needs a cost amount"
+    },
+    "otherCosts": {
+      "helper": "Update other recurring costs and how often they are paid.",
+      "empty": "No other costs recorded.",
+      "unnamed": "Other cost",
+      "validation": "Each cost needs an amount"
+    },
+    "pets": {
+      "helper": "Update food and vet costs for each pet.",
+      "empty": "No pets recorded.",
+      "unnamed": "Pet {{n}}",
+      "name": "Pet name",
+      "food": "Food",
+      "vet": "Vet / care"
+    },
+    "housing": {
+      "helper": "Update your main housing costs. Other housing details from setup are preserved.",
+      "type": "Housing type: {{type}}",
+      "rent": "Monthly rent",
+      "utilities": "Monthly utilities",
+      "internet": "Internet",
+      "mortgage": "Monthly mortgage payment",
+      "otherCost": "Other cost {{n}}",
+      "familyContribution": "Family contribution {{n}}"
+    },
+    "transport": {
+      "helper": "Update transport costs. Other vehicle details from setup are preserved.",
+      "publicTransport": "Public transport pass",
+      "vehicle": "Vehicle {{n}}",
+      "fuel": "Fuel / charging",
+      "insurance": "Insurance",
+      "parking": "Parking",
+      "empty": "No transport costs recorded."
+    },
+    "health": {
+      "helper": "Update insurance premiums for each household member.",
+      "loading": "Loading household members…",
+      "validation": "Please enter a premium amount"
+    },
+    "children": {
+      "helper": "Update cost amounts for each child. Add new costs from setup if needed.",
+      "noChildren": "No children in your household profile.",
+      "empty": "No children's costs recorded yet.",
+      "noFields": "No cost fields for this child.",
+      "childLabel": "Child {{n}}",
+      "otherCost": "Other cost"
+    },
+    "sections": {
+      "income": "Edit income",
+      "housing": "Edit housing",
+      "transport": "Edit transport",
+      "health": "Edit health insurance",
+      "children": "Edit children costs",
+      "pets": "Edit pets",
+      "subscriptions": "Edit subscriptions",
+      "other": "Edit other costs",
+      "debts": "Edit debts",
+      "budget": "Edit budget"
     }
   },
   "settings": {
     "title": "Settings",
     "redoSetup": "Redo Setup",
+    "revokeConsent": "Withdraw consent",
+    "revokeConsentConfirmTitle": "Are you sure?",
+    "revokeConsentConfirmMessage": "This will delete all your data and progress. You will need to retake the questionnaire.",
+    "revokeConsentConfirmButton": "Withdraw",
     "language": "Language",
     "theme": "Theme",
     "currency": "Currency"

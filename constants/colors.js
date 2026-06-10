@@ -1,5 +1,5 @@
 /**
- * Design system color tokens — PocketOS blue/navy palette (UI Examples)
+ * Design system color tokens — Bida blue/navy palette (UI Examples)
  * Single source of truth for all colors in the app
  */
 

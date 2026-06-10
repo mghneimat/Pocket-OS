@@ -1,11 +1,16 @@
+import { Platform } from 'react-native';
+
 /**
  * Onboarding UI design tokens — single source of truth for all inline styles
  * used across onboarding question screens, splash screens, and shared components.
  *
  * Updated to match the blue/navy design system from UI Examples (Screens 2, 5, 6).
+ * Gluestack provider tokens mirror these values in gluestack-ui.config.js — keep both in sync.
  *
  * Rule: No onboarding component may hardcode a colour, radius, font size, or
  * spacing value that is defined here. Import from this file instead.
+ *
+ * @see gluestack-ui.config.js
  */
 
 // ── Colour palette ──────────────────────────────────────────────────────────
@@ -22,7 +27,7 @@ export const C = {
   muted:           '#6B7A99',        // Slate gray for secondary text (UI Examples)
   border:          '#D1DCF0',        // Light blue border (UI Examples)
   divider:         '#D1DCF0',        // Light blue divider (UI Examples)
-  placeholder:     '#9CA3AF',        // Gray placeholder
+  placeholder:     '#6B7A99',        // Muted placeholder (≥4.5:1 on surface)
   disabled:        '#D1D5DB',        // Light gray disabled
 
   // Chip / pill states
@@ -70,41 +75,53 @@ export const R = {
   chip:    12,   // Suggestion chips (subscriptions, other-costs)
 };
 
-// ── Typography ────────────────────────────────────────────────────────────────
+// ── Typography (fixed product scale: 12 / 13 / 15 / 24 / 28 / 40) ───────────
 export const T = {
   // Question screen
   questionTitle:   { fontSize: 24, lineHeight: 32, fontWeight: '700', color: '#1E3A5F', fontFamily: 'Inter' },
-  helper:          { fontSize: 15, lineHeight: 22, color: '#6B7A99', fontFamily: 'Inter' },
+  helper:          { fontSize: 15, lineHeight: 23, color: '#6B7A99', fontFamily: 'Inter' },
 
   // Splash screen
-  splashHeading:   { fontSize: 30, lineHeight: 36, fontWeight: '700', color: '#1E3A5F', fontFamily: 'Inter' },
+  splashHeading:   { fontSize: 28, lineHeight: 34, fontWeight: '700', color: '#1E3A5F', fontFamily: 'Inter' },
   splashBody:      { fontSize: 15, lineHeight: 24, color: '#6B7A99', fontFamily: 'Inter' },
-  eyebrow:         { fontSize: 11, fontWeight: '600', letterSpacing: 1.2, color: '#2563EB', fontFamily: 'Inter' },
+  eyebrow:         { fontSize: 12, fontWeight: '500', color: '#6B7A99', fontFamily: 'Inter' },
 
   // Labels
   fieldLabel:      { fontSize: 13, fontWeight: '500', color: '#6B7A99', fontFamily: 'Inter' },
-  caption:         { fontSize: 12, fontFamily: 'Inter' },
-  hint:            { fontSize: 12, fontFamily: 'Inter' },
+  sectionLabel:    { fontSize: 12, fontWeight: '500', color: '#6B7A99', fontFamily: 'Inter' },
+  caption:         { fontSize: 12, lineHeight: 18, fontFamily: 'Inter' },
+  hint:            { fontSize: 12, lineHeight: 18, fontFamily: 'Inter' },
 
   // Inputs
   inputText:       { fontSize: 17, fontWeight: '400', color: '#1E3A5F', fontFamily: 'Inter' },
-  inputLarge:      { fontSize: 32, fontWeight: '700', color: '#1E3A5F', fontFamily: 'Inter' },
+  inputLarge:      { fontSize: 28, fontWeight: '600', color: '#1E3A5F', fontFamily: 'Inter' },
 
   // Buttons
-  btnPrimary:      { fontSize: 15, fontWeight: '600', letterSpacing: 0.1, fontFamily: 'Inter' },
+  btnPrimary:      { fontSize: 15, fontWeight: '600', fontFamily: 'Inter' },
   btnSkip:         { fontSize: 13, color: '#6B7A99', fontFamily: 'Inter' },
   btnAdd:          { fontSize: 14, fontWeight: '500', color: '#2563EB', fontFamily: 'Inter' },
 
   // Pills
-  pillLabel:       { fontSize: 13, fontWeight: '600', fontFamily: 'Inter' },
+  pillLabel:       { fontSize: 13, fontWeight: '500', fontFamily: 'Inter' },
   pillLabelLarge:  { fontSize: 15, fontWeight: '500', fontFamily: 'Inter' },
   pillLabelSmall:  { fontSize: 11, fontFamily: 'Inter' },
 
   // Nav
   backBtn:         { fontSize: 15, fontWeight: '400', color: '#6B7A99', fontFamily: 'Inter' },
-  chapterLabel:    { fontSize: 16, fontWeight: '600', letterSpacing: 0.5, color: '#2563EB', fontFamily: 'Inter' },
-  progressLabel:   { fontSize: 11, fontWeight: '600', color: '#2563EB', fontFamily: 'Inter' },
+  chapterLabel:    { fontSize: 15, fontWeight: '600', color: '#1E3A5F', fontFamily: 'Inter' },
+  progressLabel:   { fontSize: 11, fontWeight: '500', color: '#6B7A99', fontFamily: 'Inter' },
+
+  // Welcome / brand entry
+  displayBrand:    { fontSize: 40, lineHeight: 44, color: '#1E3A5F', fontFamily: 'Inter' },
+  welcomeTagline:  { fontSize: 18, lineHeight: 26, fontWeight: '500', color: '#1E3A5F', fontFamily: 'Inter' },
+  welcomeBody:     { fontSize: 15, lineHeight: 24, color: '#6B7A99', fontFamily: 'Inter' },
 };
+
+/** Align currency figures in budget tables */
+export const tabularNums = Platform.select({
+  web: { fontVariantNumeric: 'tabular-nums' },
+  default: { fontVariant: ['tabular-nums'] },
+});
 
 // ── Spacing ───────────────────────────────────────────────────────────────────
 export const S = {
@@ -176,3 +193,14 @@ export const btnAdd = (pressed) => ({
   alignItems: 'center',
   backgroundColor: pressed ? C.addPressed : 'transparent',
 });
+
+// ── SVG illustration palette (splash screens) ───────────────────────────────
+/** Maps legacy warm-tone SVG fills to the blue/navy design system. */
+export const SVG = {
+  primary: C.primary,
+  accent: C.accent,
+  positive: C.positive,
+  surface: C.surface,
+  border: C.border,
+  bg: C.bg,
+};

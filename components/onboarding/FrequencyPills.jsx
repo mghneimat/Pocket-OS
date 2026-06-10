@@ -1,7 +1,8 @@
 import { View } from 'react-native';
+import { Text } from '@gluestack-ui/themed';
 import PillToggle from './PillToggle';
 import { useI18n } from '../../lib/i18n';
-import { C } from '../../constants/onboarding-theme';
+import { C, S, T } from '../../constants/onboarding-theme';
 
 /**
  * Standardised frequency selector pill group.
@@ -13,6 +14,7 @@ import { C } from '../../constants/onboarding-theme';
  * @param {Function} props.onChange - Called with the selected frequency key
  * @param {Object} [props.labelMap] - Optional override map: { daily: 'Per day', ... }
  * @param {boolean} [props.small] - Smaller pill padding/font (for use inside cards)
+ * @param {string} [props.label] - Visible label above the pill group
  * @param {object} [props.containerStyle] - Additional styles on the outer View
  */
 export default function FrequencyPills({
@@ -20,6 +22,7 @@ export default function FrequencyPills({
   value,
   onChange,
   labelMap,
+  label,
   small = false,
   containerStyle,
 }) {
@@ -30,13 +33,21 @@ export default function FrequencyPills({
     return t(`common.${freq}`);
   };
 
+  const groupLabel = label ?? t('common.frequency');
+
   return (
-    <View style={[{
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-      marginBottom: small ? 10 : 12,
-    }, containerStyle]}>
+    <View style={[{ marginBottom: small ? 10 : 12 }, containerStyle]}>
+      {groupLabel ? (
+        <Text style={{ ...T.fieldLabel, marginBottom: S.labelGap }}>{groupLabel}</Text>
+      ) : null}
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={groupLabel}
+        style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+      }}>
       {options.map((freq) => (
         <PillToggle
           key={freq}
@@ -50,6 +61,7 @@ export default function FrequencyPills({
           borderRadius={99}
         />
       ))}
+      </View>
     </View>
   );
 }

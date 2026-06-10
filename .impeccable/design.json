@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-08T00:00:00.000Z",
+  "title": "Design System: Bida",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Cool Paper",
+        "canonical": "oklch(96% 0.02 250)",
+        "tonalRamp": ["oklch(20% 0.04 250)", "oklch(30% 0.04 250)", "oklch(40% 0.03 250)", "oklch(50% 0.03 250)", "oklch(60% 0.02 250)", "oklch(70% 0.02 250)", "oklch(80% 0.02 250)", "oklch(96% 0.02 250)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Ledger Surface",
+        "canonical": "oklch(98% 0.01 250)",
+        "tonalRamp": ["oklch(22% 0.04 250)", "oklch(32% 0.04 250)", "oklch(42% 0.03 250)", "oklch(52% 0.03 250)", "oklch(62% 0.02 250)", "oklch(72% 0.02 250)", "oklch(85% 0.015 250)", "oklch(98% 0.01 250)"]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Ledger Navy",
+        "canonical": "oklch(32% 0.06 250)",
+        "tonalRamp": ["oklch(15% 0.04 250)", "oklch(22% 0.05 250)", "oklch(28% 0.06 250)", "oklch(32% 0.06 250)", "oklch(40% 0.05 250)", "oklch(50% 0.04 250)", "oklch(65% 0.03 250)", "oklch(80% 0.02 250)"]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Action Blue",
+        "canonical": "oklch(55% 0.2 264)",
+        "tonalRamp": ["oklch(25% 0.12 264)", "oklch(35% 0.15 264)", "oklch(45% 0.18 264)", "oklch(55% 0.2 264)", "oklch(65% 0.16 264)", "oklch(75% 0.12 264)", "oklch(85% 0.08 264)", "oklch(95% 0.04 264)"]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Slate Muted",
+        "canonical": "oklch(55% 0.04 250)",
+        "tonalRamp": ["oklch(25% 0.03 250)", "oklch(35% 0.035 250)", "oklch(45% 0.04 250)", "oklch(55% 0.04 250)", "oklch(65% 0.03 250)", "oklch(75% 0.025 250)", "oklch(85% 0.02 250)", "oklch(95% 0.01 250)"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Blue Mist Border",
+        "canonical": "oklch(88% 0.03 250)",
+        "tonalRamp": ["oklch(30% 0.04 250)", "oklch(40% 0.04 250)", "oklch(50% 0.03 250)", "oklch(60% 0.03 250)", "oklch(70% 0.03 250)", "oklch(80% 0.03 250)", "oklch(88% 0.03 250)", "oklch(96% 0.02 250)"]
+      },
+      "positive": {
+        "role": "tertiary",
+        "displayName": "Positive Green",
+        "canonical": "oklch(65% 0.17 160)",
+        "tonalRamp": ["oklch(25% 0.08 160)", "oklch(35% 0.1 160)", "oklch(45% 0.12 160)", "oklch(55% 0.15 160)", "oklch(65% 0.17 160)", "oklch(75% 0.14 160)", "oklch(85% 0.1 160)", "oklch(95% 0.05 160)"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "canonical": "oklch(60% 0.22 25)",
+        "tonalRamp": ["oklch(25% 0.12 25)", "oklch(35% 0.16 25)", "oklch(45% 0.2 25)", "oklch(55% 0.22 25)", "oklch(60% 0.22 25)", "oklch(70% 0.18 25)", "oklch(80% 0.12 25)", "oklch(95% 0.04 25)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Splash and welcome headlines only." },
+      "headline": { "displayName": "Headline", "purpose": "Onboarding question titles." },
+      "title": { "displayName": "Title", "purpose": "App header, money inputs, table amounts." },
+      "body": { "displayName": "Body", "purpose": "Helpers, descriptions, option labels." },
+      "label": { "displayName": "Label", "purpose": "Field labels, sidebar rows, export labels." }
+    },
+    "shadows": [
+      { "name": "dropdown-lift", "value": "0 6px 20px rgba(30, 58, 95, 0.12)", "purpose": "Language dropdown on web only. Prefer border-only when revisiting." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Sidebar collapse, label fade, drawer slide. Duration 220–280ms." },
+      { "name": "duration-fast", "value": "220ms", "purpose": "Language panel expand." },
+      { "name": "duration-sidebar", "value": "260ms", "purpose": "Sidebar width and collapse progress." }
+    ],
+    "breakpoints": [
+      { "name": "wide", "value": "768px", "purpose": "Sidebar inline vs mobile drawer." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main CTA on onboarding continue bar and welcome screen.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Continue</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 16px 24px; border: none; border-radius: 10px; background: #2563EB; color: #FFFFFF; font-family: Inter, system-ui, sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.1px; cursor: pointer; transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s; } .ds-btn-primary:hover { opacity: 0.92; } .ds-btn-primary:active { background: #1D4ED8; } .ds-btn-primary:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; } .ds-btn-primary:disabled { background: #D1D5DB; cursor: not-allowed; opacity: 1; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Skip and secondary actions.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\">Skip for now</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; padding: 16px 24px; border: 1.5px solid #D1DCF0; border-radius: 10px; background: transparent; color: #6B7A99; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 400; cursor: pointer; transition: background 0.2s; } .ds-btn-outline:hover { background: rgba(30, 58, 95, 0.05); } .ds-btn-outline:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }"
+    },
+    {
+      "name": "Option Card",
+      "kind": "card",
+      "refersTo": "chip-default",
+      "description": "Selectable onboarding choice row with optional emoji icon.",
+      "html": "<button class=\"ds-option-card\" type=\"button\"><span class=\"ds-option-icon\">♾️</span><span class=\"ds-option-label\">Free rollover</span></button>",
+      "css": ".ds-option-card { display: flex; align-items: center; width: 100%; padding: 14px 18px; margin-bottom: 10px; border: 1.5px solid #D1DCF0; border-radius: 10px; background: #F8FAFF; color: #1E3A5F; font-family: Inter, system-ui, sans-serif; font-size: 15px; text-align: left; cursor: pointer; transition: border-color 0.2s, background 0.2s; } .ds-option-card:hover { border-color: #2563EB; background: rgba(37, 99, 235, 0.04); } .ds-option-card:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; } .ds-option-card.ds-selected { border-color: #1E3A5F; background: rgba(30, 58, 95, 0.04); font-weight: 600; } .ds-option-icon { font-size: 20px; margin-right: 12px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard labeled field with focus border shift to accent blue.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Monthly income</span><input class=\"ds-input\" type=\"text\" placeholder=\"0\" /></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font-family: Inter, system-ui, sans-serif; } .ds-field-label { font-size: 13px; font-weight: 500; color: #6B7A99; } .ds-input { padding: 14px 16px; border: 2.5px solid #D1DCF0; border-radius: 10px; background: #F8FAFF; color: #1E3A5F; font-size: 17px; transition: border-color 0.2s; } .ds-input::placeholder { color: #6B7A99; } .ds-input:focus { border-color: #2563EB; outline: none; } .ds-input:focus-visible { box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25); }"
+    },
+    {
+      "name": "Suggestion Chip",
+      "kind": "chip",
+      "refersTo": "chip-default",
+      "description": "Toggle chip for quick-add rows in onboarding.",
+      "html": "<button class=\"ds-chip\" type=\"button\">Add child</button>",
+      "css": ".ds-chip { padding: 12px 14px; border: 1.5px solid #D1DCF0; border-radius: 12px; background: #F8FAFF; color: #6B7A99; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s; } .ds-chip:hover { background: #EFF4FB; } .ds-chip.ds-active { border-color: #1E3A5F; background: #DBEAFE; color: #1E3A5F; font-weight: 600; } .ds-chip:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }"
+    },
+    {
+      "name": "Sidebar Nav Row",
+      "kind": "nav",
+      "refersTo": "nav-row-active",
+      "description": "App sidebar navigation item with fixed icon slot.",
+      "html": "<button class=\"ds-nav-row ds-active\" type=\"button\"><span class=\"ds-nav-icon\"></span><span class=\"ds-nav-label\">Budget</span></button>",
+      "css": ".ds-nav-row { display: flex; align-items: center; height: 40px; padding: 0 8px 0 6px; margin: 0 8px; border: none; border-radius: 10px; background: transparent; color: #6B7A99; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; } .ds-nav-row:hover { background: rgba(30, 58, 95, 0.05); } .ds-nav-row.ds-active { background: #DBEAFE; color: #1E3A5F; font-weight: 600; } .ds-nav-row:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; } .ds-nav-icon { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }"
+    },
+    {
+      "name": "Frequency Pill",
+      "kind": "chip",
+      "refersTo": "chip-selected",
+      "description": "Rounded pill for income/cost frequency selection.",
+      "html": "<button class=\"ds-pill ds-selected\" type=\"button\">Monthly</button>",
+      "css": ".ds-pill { padding: 14px 16px; border: 1px solid #D1DCF0; border-radius: 99px; background: #EFF4FB; color: #6B7A99; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; } .ds-pill:hover { background: rgba(30, 58, 95, 0.05); } .ds-pill.ds-selected { background: #1E3A5F; border-color: #1E3A5F; color: #FFFFFF; } .ds-pill:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Your wallet patron",
+    "overview": "Bida looks and feels like a calm personal ledger brought into software: navy ink on cool paper, one blue accent for actions, and density only where money math demands it. The interface serves a couple or family sitting down in the evening to understand income, costs, and what is left to spend. It should feel trustworthy and familiar, not like a fintech marketing site or a generic AI workflow tool.",
+    "keyCharacteristics": [
+      "Restrained color strategy: tinted cool neutrals plus blue accent on primary actions and selection only",
+      "Single sans family (Inter) across all UI; fixed px scale, not fluid clamp typography",
+      "Flat surfaces at rest; depth via background tints, not decorative shadows",
+      "One question per screen during onboarding; progress bar and fixed continue bar",
+      "Collapsible left sidebar in the app shell; mobile drawer below 768px",
+      "Formal Czech and English locale parity on all user-facing copy"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Blue accent appears on primary actions, focus rings, and current selection. It is not a decorative wash across layouts.", "section": "colors" },
+      { "name": "The Token Source Rule", "body": "New screens import C, R, T, S from constants/onboarding-theme.js. Do not hardcode hex in components.", "section": "colors" },
+      { "name": "The Fixed Scale Rule", "body": "Product UI uses fixed px sizes from T.*, not clamp() fluid headings.", "section": "typography" },
+      { "name": "The Sentence Case Rule", "body": "Reserve uppercase for short badges, not section scaffolding on every screen.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Hover uses overlay rgba tints, not drop shadows.", "section": "elevation" },
+      { "name": "The No Ghost-Card Rule", "body": "Never combine border 1px with soft shadows ≥16px blur on the same component.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do import colors, radius, type, and spacing from constants/onboarding-theme.js for all new onboarding and shell UI.",
+      "Do keep Gluestack and Tailwind configs synced when changing C.* values.",
+      "Do wire all user-facing copy through useI18n() with EN + CS keys in the same edit.",
+      "Do use Action Blue only for primary CTAs, focus, and selected state.",
+      "Do preserve sidebar icon column alignment during collapse animation.",
+      "Do show loading, validation, and active-route feedback on every interactive flow."
+    ],
+    "donts": [
+      "Don't hardcode hex or rgba in components when a token exists in onboarding-theme.js.",
+      "Don't use uppercase tracked eyebrows on every section.",
+      "Don't pair 1px borders with wide soft drop shadows on cards or menus.",
+      "Don't use gradient text, glassmorphism, or decorative motion that does not convey state.",
+      "Don't mix onboarding inline tokens and NativeWind app screens without mapping to the same hex values.",
+      "Don't ship icon-only navigation without accessibilityLabel and expand affordances.",
+      "Don't use placeholder gray #9CA3AF on light surfaces; use muted #6B7A99."
+    ]
+  }
+}
